@@ -6,10 +6,6 @@
       "name": "triggerOptIn",
       "args": [
         {
-          "name": "payTxn",
-          "type": "pay"
-        },
-        {
           "name": "asset",
           "type": "asset"
         }
@@ -19,12 +15,8 @@
       }
     },
     {
-      "name": "transferAsset",
+      "name": "setCreator",
       "args": [
-        {
-          "name": "assetTransfer",
-          "type": "axfer"
-        },
         {
           "name": "sender",
           "type": "account"

@@ -27,12 +27,12 @@ import type { ABIResult, TransactionWithSigner, modelsv2 } from 'algosdk'
 import { Algodv2, OnApplicationComplete, Transaction, AtomicTransactionComposer } from 'algosdk'
 export const APP_SPEC: AppSpec = {
   "hints": {
-    "triggerOptIn(pay,asset)void": {
+    "triggerOptIn(asset)void": {
       "call_config": {
         "no_op": "CALL"
       }
     },
-    "transferAsset(axfer,account)void": {
+    "setCreator(account)void": {
       "call_config": {
         "no_op": "CALL"
       }
@@ -57,13 +57,13 @@ export const APP_SPEC: AppSpec = {
     },
     "global": {
       "declared": {
-        "Asset": {
+        "heldAsset": {
           "type": "uint64",
-          "key": "Asset"
+          "key": "heldAsset"
         },
-        "Creator": {
+        "creator": {
           "type": "bytes",
-          "key": "Creator"
+          "key": "creator"
         }
       },
       "reserved": {}
@@ -80,8 +80,8 @@ export const APP_SPEC: AppSpec = {
     }
   },
   "source": {
-    "approval": "I3ByYWdtYSB2ZXJzaW9uIDkKCi8vIFRoaXMgVEVBTCB3YXMgZ2VuZXJhdGVkIGJ5IFRFQUxTY3JpcHQgdjAuNzAuMAovLyBodHRwczovL2dpdGh1Yi5jb20vYWxnb3JhbmRmb3VuZGF0aW9uL1RFQUxTY3JpcHQKCi8vIFRoaXMgY29udHJhY3QgaXMgY29tcGxpYW50IHdpdGggYW5kL29yIGltcGxlbWVudHMgdGhlIGZvbGxvd2luZyBBUkNzOiBbIEFSQzQgXQoKLy8gVGhlIGZvbGxvd2luZyB0ZW4gbGluZXMgb2YgVEVBTCBoYW5kbGUgaW5pdGlhbCBwcm9ncmFtIGZsb3cKLy8gVGhpcyBwYXR0ZXJuIGlzIHVzZWQgdG8gbWFrZSBpdCBlYXN5IGZvciBhbnlvbmUgdG8gcGFyc2UgdGhlIHN0YXJ0IG9mIHRoZSBwcm9ncmFtIGFuZCBkZXRlcm1pbmUgaWYgYSBzcGVjaWZpYyBhY3Rpb24gaXMgYWxsb3dlZAovLyBIZXJlLCBhY3Rpb24gcmVmZXJzIHRvIHRoZSBPbkNvbXBsZXRlIGluIGNvbWJpbmF0aW9uIHdpdGggd2hldGhlciB0aGUgYXBwIGlzIGJlaW5nIGNyZWF0ZWQgb3IgY2FsbGVkCi8vIEV2ZXJ5IHBvc3NpYmxlIGFjdGlvbiBmb3IgdGhpcyBjb250cmFjdCBpcyByZXByZXNlbnRlZCBpbiB0aGUgc3dpdGNoIHN0YXRlbWVudAovLyBJZiB0aGUgYWN0aW9uIGlzIG5vdCBpbXBsbWVudGVkIGluIHRoZSBjb250cmFjdCwgaXRzIHJlc3BlY3RpdmUgYnJhbmNoIHdpbGwgYmUgIk5PVF9JTVBMRU1FTlRFRCIgd2hpY2gganVzdCBjb250YWlucyAiZXJyIgp0eG4gQXBwbGljYXRpb25JRAohCmludCA2CioKdHhuIE9uQ29tcGxldGlvbgorCnN3aXRjaCBjYWxsX05vT3AgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBjcmVhdGVfTm9PcCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVECgpOT1RfSU1QTEVNRU5URUQ6CgllcnIKCmFiaV9yb3V0ZV90cmlnZ2VyT3B0SW46CgkvLyBhc3NldDogYXNzZXQKCXR4bmEgQXBwbGljYXRpb25BcmdzIDIKCWJ0b2kKCXR4bmFzIEFzc2V0cwoKCS8vIHBheVR4bjogcGF5Cgl0eG4gR3JvdXBJbmRleAoJaW50IDEKCS0KCWR1cAoJZ3R4bnMgVHlwZUVudW0KCWludCBwYXkKCT09Cglhc3NlcnQKCgkvLyBleGVjdXRlIHRyaWdnZXJPcHRJbihhc3NldCxwYXkpdm9pZAoJY2FsbHN1YiB0cmlnZ2VyT3B0SW4KCWludCAxCglyZXR1cm4KCi8vIHRyaWdnZXJPcHRJbihhc3NldCxwYXkpdm9pZAp0cmlnZ2VyT3B0SW46Cglwcm90byAyIDAKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MjYKCS8vIGFzc2VydChwYXlUeG4ucmVjZWl2ZXIgPT09IHRoaXMuYXBwLmFkZHJlc3MpCglmcmFtZV9kaWcgLTEgLy8gcGF5VHhuOiBJbm5lclBheW1lbnQKCWd0eG5zIFJlY2VpdmVyCglnbG9iYWwgQ3VycmVudEFwcGxpY2F0aW9uQWRkcmVzcwoJPT0KCWFzc2VydAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoyNwoJLy8gc2VuZEFzc2V0VHJhbnNmZXIoewoJLy8gICAgICAgLy8geGZlckFzc2V0OiB0aGlzLkFzc2V0LnZhbHVlLAoJLy8gICAgICAgeGZlckFzc2V0OiBhc3NldCwKCS8vICAgICAgIGFzc2V0QW1vdW50OiAwLAoJLy8gICAgICAgc2VuZGVyOiB0aGlzLmFwcC5hZGRyZXNzLAoJLy8gICAgICAgYXNzZXRSZWNlaXZlcjogdGhpcy5hcHAuYWRkcmVzcywKCS8vICAgICB9KQoJaXR4bl9iZWdpbgoJaW50IGF4ZmVyCglpdHhuX2ZpZWxkIFR5cGVFbnVtCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjI5CgkvLyB4ZmVyQXNzZXQ6IGFzc2V0CglmcmFtZV9kaWcgLTIgLy8gYXNzZXQ6IEFzc2V0CglpdHhuX2ZpZWxkIFhmZXJBc3NldAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czozMAoJLy8gYXNzZXRBbW91bnQ6IDAKCWludCAwCglpdHhuX2ZpZWxkIEFzc2V0QW1vdW50CgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjMxCgkvLyBzZW5kZXI6IHRoaXMuYXBwLmFkZHJlc3MKCWdsb2JhbCBDdXJyZW50QXBwbGljYXRpb25BZGRyZXNzCglpdHhuX2ZpZWxkIFNlbmRlcgoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czozMgoJLy8gYXNzZXRSZWNlaXZlcjogdGhpcy5hcHAuYWRkcmVzcwoJZ2xvYmFsIEN1cnJlbnRBcHBsaWNhdGlvbkFkZHJlc3MKCWl0eG5fZmllbGQgQXNzZXRSZWNlaXZlcgoKCS8vIEZlZSBmaWVsZCBub3Qgc2V0LCBkZWZhdWx0aW5nIHRvIDAKCWludCAwCglpdHhuX2ZpZWxkIEZlZQoKCS8vIFN1Ym1pdCBpbm5lciB0cmFuc2FjdGlvbgoJaXR4bl9zdWJtaXQKCXJldHN1YgoKYWJpX3JvdXRlX3RyYW5zZmVyQXNzZXQ6CgkvLyBzZW5kZXI6IGFjY291bnQKCXR4bmEgQXBwbGljYXRpb25BcmdzIDEKCWJ0b2kKCXR4bmFzIEFjY291bnRzCgoJLy8gYXNzZXRUcmFuc2ZlcjogYXhmZXIKCXR4biBHcm91cEluZGV4CglpbnQgMQoJLQoJZHVwCglndHhucyBUeXBlRW51bQoJaW50IGF4ZmVyCgk9PQoJYXNzZXJ0CgoJLy8gZXhlY3V0ZSB0cmFuc2ZlckFzc2V0KGFjY291bnQsYXhmZXIpdm9pZAoJY2FsbHN1YiB0cmFuc2ZlckFzc2V0CglpbnQgMQoJcmV0dXJuCgovLyB0cmFuc2ZlckFzc2V0KGFjY291bnQsYXhmZXIpdm9pZAp0cmFuc2ZlckFzc2V0OgoJcHJvdG8gMiAwCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjM3CgkvLyB2ZXJpZnlBc3NldFRyYW5zZmVyVHhuKGFzc2V0VHJhbnNmZXIsIHsKCS8vICAgICAgIHNlbmRlcjogZ2xvYmFscy5jcmVhdG9yQWRkcmVzcywKCS8vICAgICAgIGFzc2V0UmVjZWl2ZXI6IGdsb2JhbHMuY3VycmVudEFwcGxpY2F0aW9uQWRkcmVzcywKCS8vICAgICAgIC8vIHhmZXJBc3NldDogdGhpcy5Bc3NldC52YWx1ZSwKCS8vICAgICB9KQoJLy8gdmVyaWZ5IHNlbmRlcgoJZnJhbWVfZGlnIC0xIC8vIGFzc2V0VHJhbnNmZXI6IEFzc2V0VHJhbnNmZXJUeG4KCWd0eG5zIFNlbmRlcgoJZ2xvYmFsIENyZWF0b3JBZGRyZXNzCgk9PQoJYXNzZXJ0CgoJLy8gdmVyaWZ5IGFzc2V0UmVjZWl2ZXIKCWZyYW1lX2RpZyAtMSAvLyBhc3NldFRyYW5zZmVyOiBBc3NldFRyYW5zZmVyVHhuCglndHhucyBBc3NldFJlY2VpdmVyCglnbG9iYWwgQ3VycmVudEFwcGxpY2F0aW9uQWRkcmVzcwoJPT0KCWFzc2VydAoJcmV0c3ViCgphYmlfcm91dGVfY3JlYXRlQXBwbGljYXRpb246CglpbnQgMQoJcmV0dXJuCgpjcmVhdGVfTm9PcDoKCW1ldGhvZCAiY3JlYXRlQXBwbGljYXRpb24oKXZvaWQiCgl0eG5hIEFwcGxpY2F0aW9uQXJncyAwCgltYXRjaCBhYmlfcm91dGVfY3JlYXRlQXBwbGljYXRpb24KCWVycgoKY2FsbF9Ob09wOgoJbWV0aG9kICJ0cmlnZ2VyT3B0SW4ocGF5LGFzc2V0KXZvaWQiCgltZXRob2QgInRyYW5zZmVyQXNzZXQoYXhmZXIsYWNjb3VudCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggYWJpX3JvdXRlX3RyaWdnZXJPcHRJbiBhYmlfcm91dGVfdHJhbnNmZXJBc3NldAoJZXJy",
-    "clear": "I3ByYWdtYSB2ZXJzaW9uIDk="
+    "approval": "I3ByYWdtYSB2ZXJzaW9uIDEwCgovLyBUaGlzIFRFQUwgd2FzIGdlbmVyYXRlZCBieSBURUFMU2NyaXB0IHYwLjc5LjEKLy8gaHR0cHM6Ly9naXRodWIuY29tL2FsZ29yYW5kZm91bmRhdGlvbi9URUFMU2NyaXB0CgovLyBUaGlzIGNvbnRyYWN0IGlzIGNvbXBsaWFudCB3aXRoIGFuZC9vciBpbXBsZW1lbnRzIHRoZSBmb2xsb3dpbmcgQVJDczogWyBBUkM0IF0KCi8vIFRoZSBmb2xsb3dpbmcgdGVuIGxpbmVzIG9mIFRFQUwgaGFuZGxlIGluaXRpYWwgcHJvZ3JhbSBmbG93Ci8vIFRoaXMgcGF0dGVybiBpcyB1c2VkIHRvIG1ha2UgaXQgZWFzeSBmb3IgYW55b25lIHRvIHBhcnNlIHRoZSBzdGFydCBvZiB0aGUgcHJvZ3JhbSBhbmQgZGV0ZXJtaW5lIGlmIGEgc3BlY2lmaWMgYWN0aW9uIGlzIGFsbG93ZWQKLy8gSGVyZSwgYWN0aW9uIHJlZmVycyB0byB0aGUgT25Db21wbGV0ZSBpbiBjb21iaW5hdGlvbiB3aXRoIHdoZXRoZXIgdGhlIGFwcCBpcyBiZWluZyBjcmVhdGVkIG9yIGNhbGxlZAovLyBFdmVyeSBwb3NzaWJsZSBhY3Rpb24gZm9yIHRoaXMgY29udHJhY3QgaXMgcmVwcmVzZW50ZWQgaW4gdGhlIHN3aXRjaCBzdGF0ZW1lbnQKLy8gSWYgdGhlIGFjdGlvbiBpcyBub3QgaW1wbG1lbnRlZCBpbiB0aGUgY29udHJhY3QsIGl0cyByZXNwZWN0aXZlIGJyYW5jaCB3aWxsIGJlICJOT1RfSU1QTEVNRU5URUQiIHdoaWNoIGp1c3QgY29udGFpbnMgImVyciIKdHhuIEFwcGxpY2F0aW9uSUQKIQppbnQgNgoqCnR4biBPbkNvbXBsZXRpb24KKwpzd2l0Y2ggY2FsbF9Ob09wIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgY3JlYXRlX05vT3AgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRAoKTk9UX0lNUExFTUVOVEVEOgoJZXJyCgovLyB0cmlnZ2VyT3B0SW4oYXNzZXQpdm9pZAphYmlfcm91dGVfdHJpZ2dlck9wdEluOgoJLy8gYXNzZXQ6IGFzc2V0Cgl0eG5hIEFwcGxpY2F0aW9uQXJncyAxCglidG9pCgl0eG5hcyBBc3NldHMKCgkvLyBleGVjdXRlIHRyaWdnZXJPcHRJbihhc3NldCl2b2lkCgljYWxsc3ViIHRyaWdnZXJPcHRJbgoJaW50IDEKCXJldHVybgoKLy8gdHJpZ2dlck9wdEluKGFzc2V0OiBBc3NldCk6IHZvaWQKdHJpZ2dlck9wdEluOgoJcHJvdG8gMSAwCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjExCgkvLyBzZW5kQXNzZXRUcmFuc2Zlcih7CgkvLyAgICAgICAvLyB4ZmVyQXNzZXQ6IHRoaXMuQXNzZXQudmFsdWUsCgkvLyAgICAgICB4ZmVyQXNzZXQ6IGFzc2V0LAoJLy8gICAgICAgYXNzZXRBbW91bnQ6IDAsCgkvLyAgICAgICBzZW5kZXI6IHRoaXMuYXBwLmFkZHJlc3MsCgkvLyAgICAgICBhc3NldFJlY2VpdmVyOiB0aGlzLmFwcC5hZGRyZXNzLAoJLy8gICAgIH0pCglpdHhuX2JlZ2luCglpbnQgYXhmZXIKCWl0eG5fZmllbGQgVHlwZUVudW0KCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MTMKCS8vIHhmZXJBc3NldDogYXNzZXQKCWZyYW1lX2RpZyAtMSAvLyBhc3NldDogQXNzZXQKCWl0eG5fZmllbGQgWGZlckFzc2V0CgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjE0CgkvLyBhc3NldEFtb3VudDogMAoJaW50IDAKCWl0eG5fZmllbGQgQXNzZXRBbW91bnQKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MTUKCS8vIHNlbmRlcjogdGhpcy5hcHAuYWRkcmVzcwoJZ2xvYmFsIEN1cnJlbnRBcHBsaWNhdGlvbkFkZHJlc3MKCWl0eG5fZmllbGQgU2VuZGVyCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjE2CgkvLyBhc3NldFJlY2VpdmVyOiB0aGlzLmFwcC5hZGRyZXNzCglnbG9iYWwgQ3VycmVudEFwcGxpY2F0aW9uQWRkcmVzcwoJaXR4bl9maWVsZCBBc3NldFJlY2VpdmVyCgoJLy8gRmVlIGZpZWxkIG5vdCBzZXQsIGRlZmF1bHRpbmcgdG8gMAoJaW50IDAKCWl0eG5fZmllbGQgRmVlCgoJLy8gU3VibWl0IGlubmVyIHRyYW5zYWN0aW9uCglpdHhuX3N1Ym1pdAoJcmV0c3ViCgovLyBzZXRDcmVhdG9yKGFjY291bnQpdm9pZAphYmlfcm91dGVfc2V0Q3JlYXRvcjoKCS8vIHNlbmRlcjogYWNjb3VudAoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQoJYnRvaQoJdHhuYXMgQWNjb3VudHMKCgkvLyBleGVjdXRlIHNldENyZWF0b3IoYWNjb3VudCl2b2lkCgljYWxsc3ViIHNldENyZWF0b3IKCWludCAxCglyZXR1cm4KCi8vIHNldENyZWF0b3Ioc2VuZGVyOiBBY2NvdW50KTogdm9pZApzZXRDcmVhdG9yOgoJcHJvdG8gMSAwCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjIxCgkvLyB0aGlzLmNyZWF0b3IudmFsdWUgPSBzZW5kZXIKCWJ5dGUgMHg2MzcyNjU2MTc0NmY3MiAvLyAiY3JlYXRvciIKCWZyYW1lX2RpZyAtMSAvLyBzZW5kZXI6IEFjY291bnQKCWFwcF9nbG9iYWxfcHV0CglyZXRzdWIKCmFiaV9yb3V0ZV9jcmVhdGVBcHBsaWNhdGlvbjoKCWludCAxCglyZXR1cm4KCmNyZWF0ZV9Ob09wOgoJbWV0aG9kICJjcmVhdGVBcHBsaWNhdGlvbigpdm9pZCIKCXR4bmEgQXBwbGljYXRpb25BcmdzIDAKCW1hdGNoIGFiaV9yb3V0ZV9jcmVhdGVBcHBsaWNhdGlvbgoJZXJyCgpjYWxsX05vT3A6CgltZXRob2QgInRyaWdnZXJPcHRJbihhc3NldCl2b2lkIgoJbWV0aG9kICJzZXRDcmVhdG9yKGFjY291bnQpdm9pZCIKCXR4bmEgQXBwbGljYXRpb25BcmdzIDAKCW1hdGNoIGFiaV9yb3V0ZV90cmlnZ2VyT3B0SW4gYWJpX3JvdXRlX3NldENyZWF0b3IKCWVycg==",
+    "clear": "I3ByYWdtYSB2ZXJzaW9uIDEw"
   },
   "contract": {
     "name": "ChildContract",
@@ -90,10 +90,6 @@ export const APP_SPEC: AppSpec = {
       {
         "name": "triggerOptIn",
         "args": [
-          {
-            "name": "payTxn",
-            "type": "pay"
-          },
           {
             "name": "asset",
             "type": "asset"
@@ -104,12 +100,8 @@ export const APP_SPEC: AppSpec = {
         }
       },
       {
-        "name": "transferAsset",
+        "name": "setCreator",
         "args": [
-          {
-            "name": "assetTransfer",
-            "type": "axfer"
-          },
           {
             "name": "sender",
             "type": "account"
@@ -185,20 +177,18 @@ export type ChildContract = {
    * Maps method signatures / names to their argument and return types.
    */
   methods:
-    & Record<'triggerOptIn(pay,asset)void' | 'triggerOptIn', {
+    & Record<'triggerOptIn(asset)void' | 'triggerOptIn', {
       argsObj: {
-        payTxn: TransactionToSign | Transaction | Promise<SendTransactionResult>
         asset: number | bigint
       }
-      argsTuple: [payTxn: TransactionToSign | Transaction | Promise<SendTransactionResult>, asset: number | bigint]
+      argsTuple: [asset: number | bigint]
       returns: void
     }>
-    & Record<'transferAsset(axfer,account)void' | 'transferAsset', {
+    & Record<'setCreator(account)void' | 'setCreator', {
       argsObj: {
-        assetTransfer: TransactionToSign | Transaction | Promise<SendTransactionResult>
         sender: string | Uint8Array
       }
-      argsTuple: [assetTransfer: TransactionToSign | Transaction | Promise<SendTransactionResult>, sender: string | Uint8Array]
+      argsTuple: [sender: string | Uint8Array]
       returns: void
     }>
     & Record<'createApplication()void' | 'createApplication', {
@@ -212,8 +202,8 @@ export type ChildContract = {
    */
   state: {
     global: {
-      'Asset'?: IntegerState
-      'Creator'?: BinaryState
+      'heldAsset'?: IntegerState
+      'creator'?: BinaryState
     }
   }
 }
@@ -289,30 +279,30 @@ export abstract class ChildContractCallFactory {
   }
 
   /**
-   * Constructs a no op call for the triggerOptIn(pay,asset)void ABI method
+   * Constructs a no op call for the triggerOptIn(asset)void ABI method
    *
    * @param args Any args for the contract call
    * @param params Any additional parameters for the call
    * @returns A TypedCallParams object for the call
    */
-  static triggerOptIn(args: MethodArgs<'triggerOptIn(pay,asset)void'>, params: AppClientCallCoreParams & CoreAppCallArgs) {
+  static triggerOptIn(args: MethodArgs<'triggerOptIn(asset)void'>, params: AppClientCallCoreParams & CoreAppCallArgs) {
     return {
-      method: 'triggerOptIn(pay,asset)void' as const,
-      methodArgs: Array.isArray(args) ? args : [args.payTxn, args.asset],
+      method: 'triggerOptIn(asset)void' as const,
+      methodArgs: Array.isArray(args) ? args : [args.asset],
       ...params,
     }
   }
   /**
-   * Constructs a no op call for the transferAsset(axfer,account)void ABI method
+   * Constructs a no op call for the setCreator(account)void ABI method
    *
    * @param args Any args for the contract call
    * @param params Any additional parameters for the call
    * @returns A TypedCallParams object for the call
    */
-  static transferAsset(args: MethodArgs<'transferAsset(axfer,account)void'>, params: AppClientCallCoreParams & CoreAppCallArgs) {
+  static setCreator(args: MethodArgs<'setCreator(account)void'>, params: AppClientCallCoreParams & CoreAppCallArgs) {
     return {
-      method: 'transferAsset(axfer,account)void' as const,
-      methodArgs: Array.isArray(args) ? args : [args.assetTransfer, args.sender],
+      method: 'setCreator(account)void' as const,
+      methodArgs: Array.isArray(args) ? args : [args.sender],
       ...params,
     }
   }
@@ -416,25 +406,25 @@ export class ChildContractClient {
   }
 
   /**
-   * Calls the triggerOptIn(pay,asset)void ABI method.
+   * Calls the triggerOptIn(asset)void ABI method.
    *
    * @param args The arguments for the contract call
    * @param params Any additional parameters for the call
    * @returns The result of the call
    */
-  public triggerOptIn(args: MethodArgs<'triggerOptIn(pay,asset)void'>, params: AppClientCallCoreParams & CoreAppCallArgs = {}) {
+  public triggerOptIn(args: MethodArgs<'triggerOptIn(asset)void'>, params: AppClientCallCoreParams & CoreAppCallArgs = {}) {
     return this.call(ChildContractCallFactory.triggerOptIn(args, params))
   }
 
   /**
-   * Calls the transferAsset(axfer,account)void ABI method.
+   * Calls the setCreator(account)void ABI method.
    *
    * @param args The arguments for the contract call
    * @param params Any additional parameters for the call
    * @returns The result of the call
    */
-  public transferAsset(args: MethodArgs<'transferAsset(axfer,account)void'>, params: AppClientCallCoreParams & CoreAppCallArgs = {}) {
-    return this.call(ChildContractCallFactory.transferAsset(args, params))
+  public setCreator(args: MethodArgs<'setCreator(account)void'>, params: AppClientCallCoreParams & CoreAppCallArgs = {}) {
+    return this.call(ChildContractCallFactory.setCreator(args, params))
   }
 
   /**
@@ -487,11 +477,11 @@ export class ChildContractClient {
   public async getGlobalState(): Promise<ChildContract['state']['global']> {
     const state = await this.appClient.getGlobalState()
     return {
-      get Asset() {
-        return ChildContractClient.getIntegerState(state, 'Asset')
+      get heldAsset() {
+        return ChildContractClient.getIntegerState(state, 'heldAsset')
       },
-      get Creator() {
-        return ChildContractClient.getBinaryState(state, 'Creator')
+      get creator() {
+        return ChildContractClient.getBinaryState(state, 'creator')
       },
     }
   }
@@ -502,13 +492,13 @@ export class ChildContractClient {
     let promiseChain:Promise<unknown> = Promise.resolve()
     const resultMappers: Array<undefined | ((x: any) => any)> = []
     return {
-      triggerOptIn(args: MethodArgs<'triggerOptIn(pay,asset)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs) {
+      triggerOptIn(args: MethodArgs<'triggerOptIn(asset)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs) {
         promiseChain = promiseChain.then(() => client.triggerOptIn(args, {...params, sendParams: {...params?.sendParams, skipSending: true, atc}}))
         resultMappers.push(undefined)
         return this
       },
-      transferAsset(args: MethodArgs<'transferAsset(axfer,account)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs) {
-        promiseChain = promiseChain.then(() => client.transferAsset(args, {...params, sendParams: {...params?.sendParams, skipSending: true, atc}}))
+      setCreator(args: MethodArgs<'setCreator(account)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs) {
+        promiseChain = promiseChain.then(() => client.setCreator(args, {...params, sendParams: {...params?.sendParams, skipSending: true, atc}}))
         resultMappers.push(undefined)
         return this
       },
@@ -543,22 +533,22 @@ export class ChildContractClient {
 }
 export type ChildContractComposer<TReturns extends [...any[]] = []> = {
   /**
-   * Calls the triggerOptIn(pay,asset)void ABI method.
+   * Calls the triggerOptIn(asset)void ABI method.
    *
    * @param args The arguments for the contract call
    * @param params Any additional parameters for the call
    * @returns The typed transaction composer so you can fluently chain multiple calls or call execute to execute all queued up transactions
    */
-  triggerOptIn(args: MethodArgs<'triggerOptIn(pay,asset)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs): ChildContractComposer<[...TReturns, MethodReturn<'triggerOptIn(pay,asset)void'>]>
+  triggerOptIn(args: MethodArgs<'triggerOptIn(asset)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs): ChildContractComposer<[...TReturns, MethodReturn<'triggerOptIn(asset)void'>]>
 
   /**
-   * Calls the transferAsset(axfer,account)void ABI method.
+   * Calls the setCreator(account)void ABI method.
    *
    * @param args The arguments for the contract call
    * @param params Any additional parameters for the call
    * @returns The typed transaction composer so you can fluently chain multiple calls or call execute to execute all queued up transactions
    */
-  transferAsset(args: MethodArgs<'transferAsset(axfer,account)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs): ChildContractComposer<[...TReturns, MethodReturn<'transferAsset(axfer,account)void'>]>
+  setCreator(args: MethodArgs<'setCreator(account)void'>, params?: AppClientCallCoreParams & CoreAppCallArgs): ChildContractComposer<[...TReturns, MethodReturn<'setCreator(account)void'>]>
 
   /**
    * Makes a clear_state call to an existing instance of the ChildContract smart contract.

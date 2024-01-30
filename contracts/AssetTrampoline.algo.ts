@@ -2,28 +2,12 @@ import { Contract } from '@algorandfoundation/tealscript';
 
 // eslint-disable-next-line no-unused-vars
 class ChildContract extends Contract {
-  Asset = GlobalStateKey<Asset>();
+  heldAsset = GlobalStateKey<Asset>();
 
-  Creator = GlobalStateKey<Account>();
+  creator = GlobalStateKey<Account>();
 
-  // @allow.create()
-  // new(asset: Asset): Address {
-  //   this.Asset.value = asset;
-  //   return this.app.address;
-  // }
-
-  // createApplication(asset: Asset): void {
-  //   this.Asset.value = asset;
-  //   // return this.app.address;
-  // }
-
-  triggerOptIn(payTxn: InnerPayment, asset: Asset): void {
-    // this.Asset.value = asset;
-    // verifyPayTxn(payTxn, {
-    //   receiver: this.app.address,
-    // });
-
-    assert(payTxn.receiver === this.app.address);
+  triggerOptIn(asset: Asset): void {
+    // this.heldAsset.value = asset as Asset;
     sendAssetTransfer({
       // xferAsset: this.Asset.value,
       xferAsset: asset,
@@ -33,14 +17,8 @@ class ChildContract extends Contract {
     });
   }
 
-  transferAsset(assetTransfer: AssetTransferTxn, sender: Account): void {
-    verifyAssetTransferTxn(assetTransfer, {
-      sender: globals.creatorAddress,
-      assetReceiver: globals.currentApplicationAddress,
-      // xferAsset: this.Asset.value,
-    });
-
-    // this.Creator.value = sender;
+  setCreator(sender: Account): void {
+    this.creator.value = sender;
   }
 }
 // eslint-disable-next-line no-unused-vars
@@ -64,7 +42,7 @@ class AssetTrampoline extends Contract {
       sender: globals.creatorAddress,
     });
 
-    assert(globals.currentApplicationAddress.hasAsset(assetTransfer.xferAsset));
+    assert(globals.currentApplicationAddress.isOptedInToAsset(assetTransfer.xferAsset));
     verifyAssetTransferTxn(assetTransfer, {
       sender: globals.creatorAddress,
       assetReceiver: globals.currentApplicationAddress,
@@ -75,34 +53,23 @@ class AssetTrampoline extends Contract {
       name: 'createApplication',
       clearStateProgram: ChildContract.clearProgram(),
       approvalProgram: ChildContract.approvalProgram(),
-      // methodArgs: [assetTransfer.xferAsset],
-      // fee: 3000,
     });
 
     const childAppId = this.itxn.createdApplicationID;
     sendPayment({
       receiver: childAppId.address,
-      amount: 300_000,
+      amount: 500_000,
     });
 
-    sendMethodCall<[InnerPayment, Asset], void>({
+    sendMethodCall<[Asset], void>({
       name: 'triggerOptIn',
       applicationID: childAppId,
-
-      methodArgs: [{ amount: 200_000, receiver: childAppId.address }, assetTransfer.xferAsset],
+      methodArgs: [assetTransfer.xferAsset],
     });
-
-    // sendMethodCall<[InnerAssetTransfer, Address], void>({
-    //   name: 'transferAsset',
-    //   applicationID: childAppId,
-    //   methodArgs: [
-    //     {
-    //       xferAsset: assetTransfer.xferAsset,
-    //       assetReceiver: childAppId.address,
-    //       assetAmount: assetTransfer.assetAmount,
-    //     },
-    //     globals.creatorAddress,
-    //   ],
-    // });
+    sendAssetTransfer({
+      xferAsset: assetTransfer.xferAsset,
+      assetReceiver: childAppId.address,
+      assetAmount: assetTransfer.assetAmount,
+    });
   }
 }
