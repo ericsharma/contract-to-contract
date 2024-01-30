@@ -1,0 +1,45 @@
+{
+  "name": "ChildContract",
+  "desc": "",
+  "methods": [
+    {
+      "name": "triggerOptIn",
+      "args": [
+        {
+          "name": "payTxn",
+          "type": "pay"
+        },
+        {
+          "name": "asset",
+          "type": "asset"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "transferAsset",
+      "args": [
+        {
+          "name": "assetTransfer",
+          "type": "axfer"
+        },
+        {
+          "name": "sender",
+          "type": "account"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "createApplication",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    }
+  ]
+}

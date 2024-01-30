@@ -6,7 +6,9 @@
     "generate-client": "algokit generate client contracts/artifacts/ --language typescript  --output contracts/clients/{contract_name}Client.ts",
     "compile-contract": "tealscript contracts/*.algo.ts contracts/artifacts",
     "generate-components": "algokit-generate-component contracts/artifacts/ContractToContract.arc32.json contracts/artifacts/components",
-    "build": "npm run compile-contract && npm run generate-client",
+    "test-asset-trampoline": "jest contracts/AssetTrampoline.test.ts",
+    "compile-generate-client": "tealscript contracts/*.algo.ts contracts/artifacts && algokit generate client contracts/artifacts/ --language typescript  --output contracts/clients/{contract_name}Client.ts && jest contracts/AssetTrampoline.test.ts",
+    "build": "compile-contract && generate-client",
     "test": "npm run build && jest",
     "lint": "eslint . --ext .ts",
     "fix": "eslint . --ext .ts --fix"
