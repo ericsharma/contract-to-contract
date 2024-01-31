@@ -72,7 +72,7 @@ describe('Asset Trampoline', () => {
     const childMbrOptInTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       suggestedParams: { ...(await algod.getTransactionParams().do()) },
       from: alice.addr,
-      amount: 1_200_000,
+      amount: 200_000,
       to: appAddress,
     });
 
@@ -81,24 +81,11 @@ describe('Asset Trampoline', () => {
       to: appAddress,
       assetIndex: Number(asa),
       amount: 10,
-      //   suggestedParams: { ...(await algod.getTransactionParams().do()), fee: algokit.microAlgos(8_000) },
       suggestedParams: await algod.getTransactionParams().do(),
     });
 
-    console.info({ alice });
-
     await appClient.sendAssetToChildContract([childMbrOptInTxn, assetTransferTxn], {
-      sendParams: { fee: algokit.microAlgos(100_000) },
+      sendParams: { fee: algokit.microAlgos(6_000) },
     });
-
-    // *** Can't get the creater application to go through
-
-    // await factoryCaller.mintAndGetAsset(
-    //     {},
-    // {
-    //   sendParams: { fee: algokit.microAlgos(8_000) },
-    // }
-    //   )
-    // ).return?.valueOf()
   });
 });

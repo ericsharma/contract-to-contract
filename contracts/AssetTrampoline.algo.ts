@@ -2,9 +2,14 @@ import { Contract } from '@algorandfoundation/tealscript';
 
 // eslint-disable-next-line no-unused-vars
 class ChildContract extends Contract {
-  heldAsset = GlobalStateKey<Asset>();
+  asset = GlobalStateKey<Asset>();
 
   creator = GlobalStateKey<Account>();
+
+  createApplication(asset: Asset, creator: Account): void {
+    this.asset.value = asset;
+    this.creator.value = creator;
+  }
 
   triggerOptIn(asset: Asset): void {
     // this.heldAsset.value = asset as Asset;
@@ -49,16 +54,21 @@ class AssetTrampoline extends Contract {
     });
 
     // Create child contract
-    sendMethodCall<[], void>({
+    sendMethodCall<[Asset, Account], void>({
       name: 'createApplication',
       clearStateProgram: ChildContract.clearProgram(),
       approvalProgram: ChildContract.approvalProgram(),
+      methodArgs: [assetTransfer.xferAsset, assetTransfer.sender],
+      globalNumByteSlice: ChildContract.schema.global.numByteSlice,
+      globalNumUint: ChildContract.schema.global.numUint,
+      localNumByteSlice: ChildContract.schema.local.numByteSlice,
+      localNumUint: ChildContract.schema.local.numUint,
     });
 
     const childAppId = this.itxn.createdApplicationID;
     sendPayment({
       receiver: childAppId.address,
-      amount: 500_000,
+      amount: payTxn.amount,
     });
 
     sendMethodCall<[Asset], void>({
