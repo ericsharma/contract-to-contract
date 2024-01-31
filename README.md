@@ -6,7 +6,7 @@ For TEALScript documentation, go to https://tealscript.algo.xyz
 
 ## Usage
 
-Demo Repository to demonstrate and Contract to Contract ASA trampoline with memory of the original (non smart contract) caller.
+Demo Repository to demonstrate seamless smart contract Opt Ins using a Contract to Contract ASA trampoline with memory of the original (non smart contract) caller.
 
 ## Cons
 
