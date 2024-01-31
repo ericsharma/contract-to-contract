@@ -3,6 +3,22 @@
   "desc": "",
   "methods": [
     {
+      "name": "createApplication",
+      "args": [
+        {
+          "name": "asset",
+          "type": "asset"
+        },
+        {
+          "name": "creator",
+          "type": "account"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
       "name": "triggerOptIn",
       "args": [
         {
@@ -22,13 +38,6 @@
           "type": "account"
         }
       ],
-      "returns": {
-        "type": "void"
-      }
-    },
-    {
-      "name": "createApplication",
-      "args": [],
       "returns": {
         "type": "void"
       }
