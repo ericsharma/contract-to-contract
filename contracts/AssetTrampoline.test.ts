@@ -52,22 +52,12 @@ describe('Asset Trampoline', () => {
   test('optInToAsa Method', async () => {
     const { algod } = fixture.context;
     const { appAddress } = await appClient.appClient.getAppReference();
-
-    console.info(`*** Parent App ID**** ${appAddress}`);
-
     const mbrOptInTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       suggestedParams: await algod.getTransactionParams().do(),
       from: alice.addr,
       amount: 100_000,
       to: appAddress,
     });
-
-    await appClient.optInToAsa([mbrOptInTxn, Number(asa)], { sendParams: { fee: algokit.microAlgos(3_000) } });
-  });
-
-  test('sendAssetToChilContract method', async () => {
-    const { appAddress } = await appClient.appClient.getAppReference();
-    const { algod } = fixture.context;
 
     const childMbrOptInTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       suggestedParams: { ...(await algod.getTransactionParams().do()) },
@@ -84,8 +74,13 @@ describe('Asset Trampoline', () => {
       suggestedParams: await algod.getTransactionParams().do(),
     });
 
-    await appClient.sendAssetToChildContract([childMbrOptInTxn, assetTransferTxn], {
-      sendParams: { fee: algokit.microAlgos(6_000) },
-    });
+    console.info(`*** Parent App ID**** ${appAddress}`);
+    await appClient
+      .compose()
+      .optInToAsa([mbrOptInTxn, Number(asa)], { sendParams: { fee: algokit.microAlgos(3_000) } })
+      .sendAssetToChildContract([childMbrOptInTxn, assetTransferTxn], {
+        sendParams: { fee: algokit.microAlgos(6_000) },
+      })
+      .execute();
   });
 });
