@@ -10,7 +10,8 @@ describe('Asset Trampoline', () => {
 
   let appClient: AssetTrampolineClient;
 
-  let asa: bigint;
+  let sellIdx: bigint;
+  let buyIdx: bigint;
 
   let alice: algosdk.Account;
 
@@ -34,7 +35,7 @@ describe('Asset Trampoline', () => {
     await appClient.create.createApplication({});
 
     // Create an ASA to use in our tests
-    const asaCreateTxn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
+    const sellAsaCreateTxn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
       suggestedParams: await algod.getTransactionParams().do(),
       from: testAccount.addr,
       total: 10000,
@@ -42,9 +43,26 @@ describe('Asset Trampoline', () => {
       defaultFrozen: false,
     });
 
-    const { confirmation } = await algokit.sendTransaction({ transaction: asaCreateTxn, from: testAccount }, algod);
+    const { confirmation: sellConfirmation } = await algokit.sendTransaction(
+      { transaction: sellAsaCreateTxn, from: testAccount },
+      algod
+    );
 
-    asa = BigInt(confirmation!.assetIndex!);
+    sellIdx = BigInt(sellConfirmation!.assetIndex!);
+    const buyAsaCreateTxn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
+      suggestedParams: await algod.getTransactionParams().do(),
+      from: testAccount.addr,
+      total: 10000,
+      decimals: 0,
+      defaultFrozen: false,
+    });
+
+    const { confirmation: buyConfirmation } = await algokit.sendTransaction(
+      { transaction: buyAsaCreateTxn, from: testAccount },
+      algod
+    );
+
+    buyIdx = BigInt(buyConfirmation!.assetIndex!);
 
     await appClient.appClient.fundAppAccount(algokit.microAlgos(1_000_000));
   });
@@ -62,14 +80,21 @@ describe('Asset Trampoline', () => {
     const childMbrOptInTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       suggestedParams: { ...(await algod.getTransactionParams().do()) },
       from: alice.addr,
-      amount: 200_000,
+      amount: 1_000_001,
       to: appAddress,
     });
 
     const assetTransferTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: alice.addr,
       to: appAddress,
-      assetIndex: Number(asa),
+      assetIndex: Number(sellIdx),
+      amount: 10,
+      suggestedParams: await algod.getTransactionParams().do(),
+    });
+    const assetTransferBuyTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: alice.addr,
+      to: appAddress,
+      assetIndex: Number(buyIdx),
       amount: 10,
       suggestedParams: await algod.getTransactionParams().do(),
     });
@@ -77,8 +102,10 @@ describe('Asset Trampoline', () => {
     console.info(`*** Parent App ID**** ${appAddress}`);
     await appClient
       .compose()
-      .optInToAsa([mbrOptInTxn, Number(asa)], { sendParams: { fee: algokit.microAlgos(3_000) } })
-      .sendAssetToChildContract([childMbrOptInTxn, assetTransferTxn], {
+      .optInToAsa([mbrOptInTxn, Number(sellIdx)], { sendParams: { fee: algokit.microAlgos(3_000) } })
+      // .optInToAsa([mbrOptInTxn, Number(buyIdx)], { sendParams: { fee: algokit.microAlgos(3_000) } })
+
+      .sendAssetToChildContract([childMbrOptInTxn, assetTransferTxn, Number(buyIdx), 10, 20], {
         sendParams: { fee: algokit.microAlgos(6_000) },
       })
       .execute();

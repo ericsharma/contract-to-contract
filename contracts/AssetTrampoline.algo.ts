@@ -2,12 +2,21 @@ import { Contract } from '@algorandfoundation/tealscript';
 
 // eslint-disable-next-line no-unused-vars
 class ChildContract extends Contract {
-  asset = GlobalStateKey<Asset>();
+  sellAsset = GlobalStateKey<Asset>();
+
+  buyAsset = GlobalStateKey<Asset>();
+
+  buyQuant = GlobalStateKey<uint64>();
+
+  sellQuant = GlobalStateKey<uint64>();
 
   creator = GlobalStateKey<Account>();
 
-  createApplication(asset: Asset, creator: Account): void {
-    this.asset.value = asset;
+  createApplication(sellAsset: Asset, buyAsset: Asset, sellQuant: uint64, buyQuant: uint64, creator: Account): void {
+    this.sellAsset.value = sellAsset;
+    this.buyAsset.value = buyAsset;
+    this.sellQuant.value = sellQuant;
+    this.buyQuant.value = buyQuant;
     this.creator.value = creator;
   }
 
@@ -40,11 +49,18 @@ class AssetTrampoline extends Contract {
     });
   }
 
-  sendAssetToChildContract(payTxn: PayTxn, assetTransfer: AssetTransferTxn): void {
+  sendAssetToChildContract(
+    payTxn: PayTxn,
+    assetTransfer: AssetTransferTxn,
+    buyAsset: Asset,
+    sellQuant: uint64,
+    buyQuant: uint64
+  ): void {
     // Verify input Transactions
     verifyPayTxn(payTxn, {
       receiver: globals.currentApplicationAddress,
       sender: globals.creatorAddress,
+      amount: 1_000_001,
     });
 
     assert(globals.currentApplicationAddress.isOptedInToAsset(assetTransfer.xferAsset));
@@ -54,11 +70,11 @@ class AssetTrampoline extends Contract {
     });
 
     // Create child contract
-    sendMethodCall<[Asset, Account], void>({
+    sendMethodCall<[Asset, Asset, uint64, uint64, Account], void>({
       name: 'createApplication',
       clearStateProgram: ChildContract.clearProgram(),
       approvalProgram: ChildContract.approvalProgram(),
-      methodArgs: [assetTransfer.xferAsset, assetTransfer.sender],
+      methodArgs: [assetTransfer.xferAsset, buyAsset, sellQuant, buyQuant, assetTransfer.sender],
       globalNumByteSlice: ChildContract.schema.global.numByteSlice,
       globalNumUint: ChildContract.schema.global.numUint,
       localNumByteSlice: ChildContract.schema.local.numByteSlice,

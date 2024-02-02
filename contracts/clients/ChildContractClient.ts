@@ -27,7 +27,7 @@ import type { ABIResult, TransactionWithSigner, modelsv2 } from 'algosdk'
 import { Algodv2, OnApplicationComplete, Transaction, AtomicTransactionComposer } from 'algosdk'
 export const APP_SPEC: AppSpec = {
   "hints": {
-    "createApplication(asset,account)void": {
+    "createApplication(asset,asset,uint64,uint64,account)void": {
       "call_config": {
         "no_op": "CREATE"
       }
@@ -57,9 +57,21 @@ export const APP_SPEC: AppSpec = {
     },
     "global": {
       "declared": {
-        "asset": {
+        "sellAsset": {
           "type": "uint64",
-          "key": "asset"
+          "key": "sellAsset"
+        },
+        "buyAsset": {
+          "type": "uint64",
+          "key": "buyAsset"
+        },
+        "buyQuant": {
+          "type": "uint64",
+          "key": "buyQuant"
+        },
+        "sellQuant": {
+          "type": "uint64",
+          "key": "sellQuant"
         },
         "creator": {
           "type": "bytes",
@@ -72,7 +84,7 @@ export const APP_SPEC: AppSpec = {
   "state": {
     "global": {
       "num_byte_slices": 1,
-      "num_uints": 1
+      "num_uints": 4
     },
     "local": {
       "num_byte_slices": 0,
@@ -80,7 +92,7 @@ export const APP_SPEC: AppSpec = {
     }
   },
   "source": {
-    "approval": "I3ByYWdtYSB2ZXJzaW9uIDEwCgovLyBUaGlzIFRFQUwgd2FzIGdlbmVyYXRlZCBieSBURUFMU2NyaXB0IHYwLjc5LjEKLy8gaHR0cHM6Ly9naXRodWIuY29tL2FsZ29yYW5kZm91bmRhdGlvbi9URUFMU2NyaXB0CgovLyBUaGlzIGNvbnRyYWN0IGlzIGNvbXBsaWFudCB3aXRoIGFuZC9vciBpbXBsZW1lbnRzIHRoZSBmb2xsb3dpbmcgQVJDczogWyBBUkM0IF0KCi8vIFRoZSBmb2xsb3dpbmcgdGVuIGxpbmVzIG9mIFRFQUwgaGFuZGxlIGluaXRpYWwgcHJvZ3JhbSBmbG93Ci8vIFRoaXMgcGF0dGVybiBpcyB1c2VkIHRvIG1ha2UgaXQgZWFzeSBmb3IgYW55b25lIHRvIHBhcnNlIHRoZSBzdGFydCBvZiB0aGUgcHJvZ3JhbSBhbmQgZGV0ZXJtaW5lIGlmIGEgc3BlY2lmaWMgYWN0aW9uIGlzIGFsbG93ZWQKLy8gSGVyZSwgYWN0aW9uIHJlZmVycyB0byB0aGUgT25Db21wbGV0ZSBpbiBjb21iaW5hdGlvbiB3aXRoIHdoZXRoZXIgdGhlIGFwcCBpcyBiZWluZyBjcmVhdGVkIG9yIGNhbGxlZAovLyBFdmVyeSBwb3NzaWJsZSBhY3Rpb24gZm9yIHRoaXMgY29udHJhY3QgaXMgcmVwcmVzZW50ZWQgaW4gdGhlIHN3aXRjaCBzdGF0ZW1lbnQKLy8gSWYgdGhlIGFjdGlvbiBpcyBub3QgaW1wbG1lbnRlZCBpbiB0aGUgY29udHJhY3QsIGl0cyByZXNwZWN0aXZlIGJyYW5jaCB3aWxsIGJlICJOT1RfSU1QTEVNRU5URUQiIHdoaWNoIGp1c3QgY29udGFpbnMgImVyciIKdHhuIEFwcGxpY2F0aW9uSUQKIQppbnQgNgoqCnR4biBPbkNvbXBsZXRpb24KKwpzd2l0Y2ggY2FsbF9Ob09wIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgY3JlYXRlX05vT3AgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRAoKTk9UX0lNUExFTUVOVEVEOgoJZXJyCgovLyBjcmVhdGVBcHBsaWNhdGlvbihhc3NldCxhY2NvdW50KXZvaWQKYWJpX3JvdXRlX2NyZWF0ZUFwcGxpY2F0aW9uOgoJLy8gY3JlYXRvcjogYWNjb3VudAoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMgoJYnRvaQoJdHhuYXMgQWNjb3VudHMKCgkvLyBhc3NldDogYXNzZXQKCXR4bmEgQXBwbGljYXRpb25BcmdzIDEKCWJ0b2kKCXR4bmFzIEFzc2V0cwoKCS8vIGV4ZWN1dGUgY3JlYXRlQXBwbGljYXRpb24oYXNzZXQsYWNjb3VudCl2b2lkCgljYWxsc3ViIGNyZWF0ZUFwcGxpY2F0aW9uCglpbnQgMQoJcmV0dXJuCgovLyBjcmVhdGVBcHBsaWNhdGlvbihhc3NldDogQXNzZXQsIGNyZWF0b3I6IEFjY291bnQpOiB2b2lkCmNyZWF0ZUFwcGxpY2F0aW9uOgoJcHJvdG8gMiAwCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjEwCgkvLyB0aGlzLmFzc2V0LnZhbHVlID0gYXNzZXQKCWJ5dGUgMHg2MTczNzM2NTc0IC8vICJhc3NldCIKCWZyYW1lX2RpZyAtMSAvLyBhc3NldDogQXNzZXQKCWFwcF9nbG9iYWxfcHV0CgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjExCgkvLyB0aGlzLmNyZWF0b3IudmFsdWUgPSBjcmVhdG9yCglieXRlIDB4NjM3MjY1NjE3NDZmNzIgLy8gImNyZWF0b3IiCglmcmFtZV9kaWcgLTIgLy8gY3JlYXRvcjogQWNjb3VudAoJYXBwX2dsb2JhbF9wdXQKCXJldHN1YgoKLy8gdHJpZ2dlck9wdEluKGFzc2V0KXZvaWQKYWJpX3JvdXRlX3RyaWdnZXJPcHRJbjoKCS8vIGFzc2V0OiBhc3NldAoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQoJYnRvaQoJdHhuYXMgQXNzZXRzCgoJLy8gZXhlY3V0ZSB0cmlnZ2VyT3B0SW4oYXNzZXQpdm9pZAoJY2FsbHN1YiB0cmlnZ2VyT3B0SW4KCWludCAxCglyZXR1cm4KCi8vIHRyaWdnZXJPcHRJbihhc3NldDogQXNzZXQpOiB2b2lkCnRyaWdnZXJPcHRJbjoKCXByb3RvIDEgMAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoxNgoJLy8gc2VuZEFzc2V0VHJhbnNmZXIoewoJLy8gICAgICAgLy8geGZlckFzc2V0OiB0aGlzLkFzc2V0LnZhbHVlLAoJLy8gICAgICAgeGZlckFzc2V0OiBhc3NldCwKCS8vICAgICAgIGFzc2V0QW1vdW50OiAwLAoJLy8gICAgICAgc2VuZGVyOiB0aGlzLmFwcC5hZGRyZXNzLAoJLy8gICAgICAgYXNzZXRSZWNlaXZlcjogdGhpcy5hcHAuYWRkcmVzcywKCS8vICAgICB9KQoJaXR4bl9iZWdpbgoJaW50IGF4ZmVyCglpdHhuX2ZpZWxkIFR5cGVFbnVtCgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjE4CgkvLyB4ZmVyQXNzZXQ6IGFzc2V0CglmcmFtZV9kaWcgLTEgLy8gYXNzZXQ6IEFzc2V0CglpdHhuX2ZpZWxkIFhmZXJBc3NldAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoxOQoJLy8gYXNzZXRBbW91bnQ6IDAKCWludCAwCglpdHhuX2ZpZWxkIEFzc2V0QW1vdW50CgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjIwCgkvLyBzZW5kZXI6IHRoaXMuYXBwLmFkZHJlc3MKCWdsb2JhbCBDdXJyZW50QXBwbGljYXRpb25BZGRyZXNzCglpdHhuX2ZpZWxkIFNlbmRlcgoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoyMQoJLy8gYXNzZXRSZWNlaXZlcjogdGhpcy5hcHAuYWRkcmVzcwoJZ2xvYmFsIEN1cnJlbnRBcHBsaWNhdGlvbkFkZHJlc3MKCWl0eG5fZmllbGQgQXNzZXRSZWNlaXZlcgoKCS8vIEZlZSBmaWVsZCBub3Qgc2V0LCBkZWZhdWx0aW5nIHRvIDAKCWludCAwCglpdHhuX2ZpZWxkIEZlZQoKCS8vIFN1Ym1pdCBpbm5lciB0cmFuc2FjdGlvbgoJaXR4bl9zdWJtaXQKCXJldHN1YgoKLy8gc2V0Q3JlYXRvcihhY2NvdW50KXZvaWQKYWJpX3JvdXRlX3NldENyZWF0b3I6CgkvLyBzZW5kZXI6IGFjY291bnQKCXR4bmEgQXBwbGljYXRpb25BcmdzIDEKCWJ0b2kKCXR4bmFzIEFjY291bnRzCgoJLy8gZXhlY3V0ZSBzZXRDcmVhdG9yKGFjY291bnQpdm9pZAoJY2FsbHN1YiBzZXRDcmVhdG9yCglpbnQgMQoJcmV0dXJuCgovLyBzZXRDcmVhdG9yKHNlbmRlcjogQWNjb3VudCk6IHZvaWQKc2V0Q3JlYXRvcjoKCXByb3RvIDEgMAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoyNgoJLy8gdGhpcy5jcmVhdG9yLnZhbHVlID0gc2VuZGVyCglieXRlIDB4NjM3MjY1NjE3NDZmNzIgLy8gImNyZWF0b3IiCglmcmFtZV9kaWcgLTEgLy8gc2VuZGVyOiBBY2NvdW50CglhcHBfZ2xvYmFsX3B1dAoJcmV0c3ViCgpjcmVhdGVfTm9PcDoKCW1ldGhvZCAiY3JlYXRlQXBwbGljYXRpb24oYXNzZXQsYWNjb3VudCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggYWJpX3JvdXRlX2NyZWF0ZUFwcGxpY2F0aW9uCgllcnIKCmNhbGxfTm9PcDoKCW1ldGhvZCAidHJpZ2dlck9wdEluKGFzc2V0KXZvaWQiCgltZXRob2QgInNldENyZWF0b3IoYWNjb3VudCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggYWJpX3JvdXRlX3RyaWdnZXJPcHRJbiBhYmlfcm91dGVfc2V0Q3JlYXRvcgoJZXJy",
+    "approval": "I3ByYWdtYSB2ZXJzaW9uIDEwCgovLyBUaGlzIFRFQUwgd2FzIGdlbmVyYXRlZCBieSBURUFMU2NyaXB0IHYwLjgwLjEKLy8gaHR0cHM6Ly9naXRodWIuY29tL2FsZ29yYW5kZm91bmRhdGlvbi9URUFMU2NyaXB0CgovLyBUaGlzIGNvbnRyYWN0IGlzIGNvbXBsaWFudCB3aXRoIGFuZC9vciBpbXBsZW1lbnRzIHRoZSBmb2xsb3dpbmcgQVJDczogWyBBUkM0IF0KCi8vIFRoZSBmb2xsb3dpbmcgdGVuIGxpbmVzIG9mIFRFQUwgaGFuZGxlIGluaXRpYWwgcHJvZ3JhbSBmbG93Ci8vIFRoaXMgcGF0dGVybiBpcyB1c2VkIHRvIG1ha2UgaXQgZWFzeSBmb3IgYW55b25lIHRvIHBhcnNlIHRoZSBzdGFydCBvZiB0aGUgcHJvZ3JhbSBhbmQgZGV0ZXJtaW5lIGlmIGEgc3BlY2lmaWMgYWN0aW9uIGlzIGFsbG93ZWQKLy8gSGVyZSwgYWN0aW9uIHJlZmVycyB0byB0aGUgT25Db21wbGV0ZSBpbiBjb21iaW5hdGlvbiB3aXRoIHdoZXRoZXIgdGhlIGFwcCBpcyBiZWluZyBjcmVhdGVkIG9yIGNhbGxlZAovLyBFdmVyeSBwb3NzaWJsZSBhY3Rpb24gZm9yIHRoaXMgY29udHJhY3QgaXMgcmVwcmVzZW50ZWQgaW4gdGhlIHN3aXRjaCBzdGF0ZW1lbnQKLy8gSWYgdGhlIGFjdGlvbiBpcyBub3QgaW1wbG1lbnRlZCBpbiB0aGUgY29udHJhY3QsIGl0cyByZXNwZWN0aXZlIGJyYW5jaCB3aWxsIGJlICJOT1RfSU1QTEVNRU5URUQiIHdoaWNoIGp1c3QgY29udGFpbnMgImVyciIKdHhuIEFwcGxpY2F0aW9uSUQKIQppbnQgNgoqCnR4biBPbkNvbXBsZXRpb24KKwpzd2l0Y2ggY2FsbF9Ob09wIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgY3JlYXRlX05vT3AgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRCBOT1RfSU1QTEVNRU5URUQgTk9UX0lNUExFTUVOVEVEIE5PVF9JTVBMRU1FTlRFRAoKTk9UX0lNUExFTUVOVEVEOgoJZXJyCgovLyBjcmVhdGVBcHBsaWNhdGlvbihhc3NldCxhc3NldCx1aW50NjQsdWludDY0LGFjY291bnQpdm9pZAphYmlfcm91dGVfY3JlYXRlQXBwbGljYXRpb246CgkvLyBjcmVhdG9yOiBhY2NvdW50Cgl0eG5hIEFwcGxpY2F0aW9uQXJncyA1CglidG9pCgl0eG5hcyBBY2NvdW50cwoKCS8vIGJ1eVF1YW50OiB1aW50NjQKCXR4bmEgQXBwbGljYXRpb25BcmdzIDQKCWJ0b2kKCgkvLyBzZWxsUXVhbnQ6IHVpbnQ2NAoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMwoJYnRvaQoKCS8vIGJ1eUFzc2V0OiBhc3NldAoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMgoJYnRvaQoJdHhuYXMgQXNzZXRzCgoJLy8gc2VsbEFzc2V0OiBhc3NldAoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQoJYnRvaQoJdHhuYXMgQXNzZXRzCgoJLy8gZXhlY3V0ZSBjcmVhdGVBcHBsaWNhdGlvbihhc3NldCxhc3NldCx1aW50NjQsdWludDY0LGFjY291bnQpdm9pZAoJY2FsbHN1YiBjcmVhdGVBcHBsaWNhdGlvbgoJaW50IDEKCXJldHVybgoKLy8gY3JlYXRlQXBwbGljYXRpb24oc2VsbEFzc2V0OiBBc3NldCwgYnV5QXNzZXQ6IEFzc2V0LCBzZWxsUXVhbnQ6IHVpbnQ2NCwgYnV5UXVhbnQ6IHVpbnQ2NCwgY3JlYXRvcjogQWNjb3VudCk6IHZvaWQKY3JlYXRlQXBwbGljYXRpb246Cglwcm90byA1IDAKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MTYKCS8vIHRoaXMuc2VsbEFzc2V0LnZhbHVlID0gc2VsbEFzc2V0CglieXRlIDB4NzM2NTZjNmM0MTczNzM2NTc0IC8vICJzZWxsQXNzZXQiCglmcmFtZV9kaWcgLTEgLy8gc2VsbEFzc2V0OiBBc3NldAoJYXBwX2dsb2JhbF9wdXQKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MTcKCS8vIHRoaXMuYnV5QXNzZXQudmFsdWUgPSBidXlBc3NldAoJYnl0ZSAweDYyNzU3OTQxNzM3MzY1NzQgLy8gImJ1eUFzc2V0IgoJZnJhbWVfZGlnIC0yIC8vIGJ1eUFzc2V0OiBBc3NldAoJYXBwX2dsb2JhbF9wdXQKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MTgKCS8vIHRoaXMuc2VsbFF1YW50LnZhbHVlID0gc2VsbFF1YW50CglieXRlIDB4NzM2NTZjNmM1MTc1NjE2ZTc0IC8vICJzZWxsUXVhbnQiCglmcmFtZV9kaWcgLTMgLy8gc2VsbFF1YW50OiB1aW50NjQKCWFwcF9nbG9iYWxfcHV0CgoJLy8gY29udHJhY3RzL0Fzc2V0VHJhbXBvbGluZS5hbGdvLnRzOjE5CgkvLyB0aGlzLmJ1eVF1YW50LnZhbHVlID0gYnV5UXVhbnQKCWJ5dGUgMHg2Mjc1Nzk1MTc1NjE2ZTc0IC8vICJidXlRdWFudCIKCWZyYW1lX2RpZyAtNCAvLyBidXlRdWFudDogdWludDY0CglhcHBfZ2xvYmFsX3B1dAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoyMAoJLy8gdGhpcy5jcmVhdG9yLnZhbHVlID0gY3JlYXRvcgoJYnl0ZSAweDYzNzI2NTYxNzQ2ZjcyIC8vICJjcmVhdG9yIgoJZnJhbWVfZGlnIC01IC8vIGNyZWF0b3I6IEFjY291bnQKCWFwcF9nbG9iYWxfcHV0CglyZXRzdWIKCi8vIHRyaWdnZXJPcHRJbihhc3NldCl2b2lkCmFiaV9yb3V0ZV90cmlnZ2VyT3B0SW46CgkvLyBhc3NldDogYXNzZXQKCXR4bmEgQXBwbGljYXRpb25BcmdzIDEKCWJ0b2kKCXR4bmFzIEFzc2V0cwoKCS8vIGV4ZWN1dGUgdHJpZ2dlck9wdEluKGFzc2V0KXZvaWQKCWNhbGxzdWIgdHJpZ2dlck9wdEluCglpbnQgMQoJcmV0dXJuCgovLyB0cmlnZ2VyT3B0SW4oYXNzZXQ6IEFzc2V0KTogdm9pZAp0cmlnZ2VyT3B0SW46Cglwcm90byAxIDAKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MjUKCS8vIHNlbmRBc3NldFRyYW5zZmVyKHsKCS8vICAgICAgIC8vIHhmZXJBc3NldDogdGhpcy5Bc3NldC52YWx1ZSwKCS8vICAgICAgIHhmZXJBc3NldDogYXNzZXQsCgkvLyAgICAgICBhc3NldEFtb3VudDogMCwKCS8vICAgICAgIHNlbmRlcjogdGhpcy5hcHAuYWRkcmVzcywKCS8vICAgICAgIGFzc2V0UmVjZWl2ZXI6IHRoaXMuYXBwLmFkZHJlc3MsCgkvLyAgICAgfSkKCWl0eG5fYmVnaW4KCWludCBheGZlcgoJaXR4bl9maWVsZCBUeXBlRW51bQoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoyNwoJLy8geGZlckFzc2V0OiBhc3NldAoJZnJhbWVfZGlnIC0xIC8vIGFzc2V0OiBBc3NldAoJaXR4bl9maWVsZCBYZmVyQXNzZXQKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MjgKCS8vIGFzc2V0QW1vdW50OiAwCglpbnQgMAoJaXR4bl9maWVsZCBBc3NldEFtb3VudAoKCS8vIGNvbnRyYWN0cy9Bc3NldFRyYW1wb2xpbmUuYWxnby50czoyOQoJLy8gc2VuZGVyOiB0aGlzLmFwcC5hZGRyZXNzCglnbG9iYWwgQ3VycmVudEFwcGxpY2F0aW9uQWRkcmVzcwoJaXR4bl9maWVsZCBTZW5kZXIKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MzAKCS8vIGFzc2V0UmVjZWl2ZXI6IHRoaXMuYXBwLmFkZHJlc3MKCWdsb2JhbCBDdXJyZW50QXBwbGljYXRpb25BZGRyZXNzCglpdHhuX2ZpZWxkIEFzc2V0UmVjZWl2ZXIKCgkvLyBGZWUgZmllbGQgbm90IHNldCwgZGVmYXVsdGluZyB0byAwCglpbnQgMAoJaXR4bl9maWVsZCBGZWUKCgkvLyBTdWJtaXQgaW5uZXIgdHJhbnNhY3Rpb24KCWl0eG5fc3VibWl0CglyZXRzdWIKCi8vIHNldENyZWF0b3IoYWNjb3VudCl2b2lkCmFiaV9yb3V0ZV9zZXRDcmVhdG9yOgoJLy8gc2VuZGVyOiBhY2NvdW50Cgl0eG5hIEFwcGxpY2F0aW9uQXJncyAxCglidG9pCgl0eG5hcyBBY2NvdW50cwoKCS8vIGV4ZWN1dGUgc2V0Q3JlYXRvcihhY2NvdW50KXZvaWQKCWNhbGxzdWIgc2V0Q3JlYXRvcgoJaW50IDEKCXJldHVybgoKLy8gc2V0Q3JlYXRvcihzZW5kZXI6IEFjY291bnQpOiB2b2lkCnNldENyZWF0b3I6Cglwcm90byAxIDAKCgkvLyBjb250cmFjdHMvQXNzZXRUcmFtcG9saW5lLmFsZ28udHM6MzUKCS8vIHRoaXMuY3JlYXRvci52YWx1ZSA9IHNlbmRlcgoJYnl0ZSAweDYzNzI2NTYxNzQ2ZjcyIC8vICJjcmVhdG9yIgoJZnJhbWVfZGlnIC0xIC8vIHNlbmRlcjogQWNjb3VudAoJYXBwX2dsb2JhbF9wdXQKCXJldHN1YgoKY3JlYXRlX05vT3A6CgltZXRob2QgImNyZWF0ZUFwcGxpY2F0aW9uKGFzc2V0LGFzc2V0LHVpbnQ2NCx1aW50NjQsYWNjb3VudCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggYWJpX3JvdXRlX2NyZWF0ZUFwcGxpY2F0aW9uCgllcnIKCmNhbGxfTm9PcDoKCW1ldGhvZCAidHJpZ2dlck9wdEluKGFzc2V0KXZvaWQiCgltZXRob2QgInNldENyZWF0b3IoYWNjb3VudCl2b2lkIgoJdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMAoJbWF0Y2ggYWJpX3JvdXRlX3RyaWdnZXJPcHRJbiBhYmlfcm91dGVfc2V0Q3JlYXRvcgoJZXJy",
     "clear": "I3ByYWdtYSB2ZXJzaW9uIDEw"
   },
   "contract": {
@@ -91,8 +103,20 @@ export const APP_SPEC: AppSpec = {
         "name": "createApplication",
         "args": [
           {
-            "name": "asset",
+            "name": "sellAsset",
             "type": "asset"
+          },
+          {
+            "name": "buyAsset",
+            "type": "asset"
+          },
+          {
+            "name": "sellQuant",
+            "type": "uint64"
+          },
+          {
+            "name": "buyQuant",
+            "type": "uint64"
           },
           {
             "name": "creator",
@@ -186,12 +210,15 @@ export type ChildContract = {
    * Maps method signatures / names to their argument and return types.
    */
   methods:
-    & Record<'createApplication(asset,account)void' | 'createApplication', {
+    & Record<'createApplication(asset,asset,uint64,uint64,account)void' | 'createApplication', {
       argsObj: {
-        asset: number | bigint
+        sellAsset: number | bigint
+        buyAsset: number | bigint
+        sellQuant: bigint | number
+        buyQuant: bigint | number
         creator: string | Uint8Array
       }
-      argsTuple: [asset: number | bigint, creator: string | Uint8Array]
+      argsTuple: [sellAsset: number | bigint, buyAsset: number | bigint, sellQuant: bigint | number, buyQuant: bigint | number, creator: string | Uint8Array]
       returns: void
     }>
     & Record<'triggerOptIn(asset)void' | 'triggerOptIn', {
@@ -213,7 +240,10 @@ export type ChildContract = {
    */
   state: {
     global: {
-      'asset'?: IntegerState
+      'sellAsset'?: IntegerState
+      'buyAsset'?: IntegerState
+      'buyQuant'?: IntegerState
+      'sellQuant'?: IntegerState
       'creator'?: BinaryState
     }
   }
@@ -250,7 +280,7 @@ export type ChildContractCreateCalls = (typeof ChildContractCallFactory)['create
  * Defines supported create methods for this smart contract
  */
 export type ChildContractCreateCallParams =
-  | (TypedCallParams<'createApplication(asset,account)void'> & (OnCompleteNoOp))
+  | (TypedCallParams<'createApplication(asset,asset,uint64,uint64,account)void'> & (OnCompleteNoOp))
 /**
  * Defines arguments required for the deploy method.
  */
@@ -273,16 +303,16 @@ export abstract class ChildContractCallFactory {
   static get create() {
     return {
       /**
-       * Constructs a create call for the ChildContract smart contract using the createApplication(asset,account)void ABI method
+       * Constructs a create call for the ChildContract smart contract using the createApplication(asset,asset,uint64,uint64,account)void ABI method
        *
        * @param args Any args for the contract call
        * @param params Any additional parameters for the call
        * @returns A TypedCallParams object for the call
        */
-      createApplication(args: MethodArgs<'createApplication(asset,account)void'>, params: AppClientCallCoreParams & CoreAppCallArgs & AppClientCompilationParams & (OnCompleteNoOp) = {}) {
+      createApplication(args: MethodArgs<'createApplication(asset,asset,uint64,uint64,account)void'>, params: AppClientCallCoreParams & CoreAppCallArgs & AppClientCompilationParams & (OnCompleteNoOp) = {}) {
         return {
-          method: 'createApplication(asset,account)void' as const,
-          methodArgs: Array.isArray(args) ? args : [args.asset, args.creator],
+          method: 'createApplication(asset,asset,uint64,uint64,account)void' as const,
+          methodArgs: Array.isArray(args) ? args : [args.sellAsset, args.buyAsset, args.sellQuant, args.buyQuant, args.creator],
           ...params,
         }
       },
@@ -394,13 +424,13 @@ export class ChildContractClient {
     const $this = this
     return {
       /**
-       * Creates a new instance of the ChildContract smart contract using the createApplication(asset,account)void ABI method.
+       * Creates a new instance of the ChildContract smart contract using the createApplication(asset,asset,uint64,uint64,account)void ABI method.
        *
        * @param args The arguments for the smart contract call
        * @param params Any additional parameters for the call
        * @returns The create result
        */
-      async createApplication(args: MethodArgs<'createApplication(asset,account)void'>, params: AppClientCallCoreParams & AppClientCompilationParams & (OnCompleteNoOp) = {}): Promise<AppCallTransactionResultOfType<MethodReturn<'createApplication(asset,account)void'>>> {
+      async createApplication(args: MethodArgs<'createApplication(asset,asset,uint64,uint64,account)void'>, params: AppClientCallCoreParams & AppClientCompilationParams & (OnCompleteNoOp) = {}): Promise<AppCallTransactionResultOfType<MethodReturn<'createApplication(asset,asset,uint64,uint64,account)void'>>> {
         return $this.mapReturnValue(await $this.appClient.create(ChildContractCallFactory.create.createApplication(args, params)))
       },
     }
@@ -488,8 +518,17 @@ export class ChildContractClient {
   public async getGlobalState(): Promise<ChildContract['state']['global']> {
     const state = await this.appClient.getGlobalState()
     return {
-      get asset() {
-        return ChildContractClient.getIntegerState(state, 'asset')
+      get sellAsset() {
+        return ChildContractClient.getIntegerState(state, 'sellAsset')
+      },
+      get buyAsset() {
+        return ChildContractClient.getIntegerState(state, 'buyAsset')
+      },
+      get buyQuant() {
+        return ChildContractClient.getIntegerState(state, 'buyQuant')
+      },
+      get sellQuant() {
+        return ChildContractClient.getIntegerState(state, 'sellQuant')
       },
       get creator() {
         return ChildContractClient.getBinaryState(state, 'creator')
