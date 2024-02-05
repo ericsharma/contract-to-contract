@@ -6,8 +6,20 @@
       "name": "createApplication",
       "args": [
         {
-          "name": "asset",
+          "name": "sellAsset",
           "type": "asset"
+        },
+        {
+          "name": "buyAsset",
+          "type": "asset"
+        },
+        {
+          "name": "sellQuant",
+          "type": "uint64"
+        },
+        {
+          "name": "buyQuant",
+          "type": "uint64"
         },
         {
           "name": "creator",
@@ -15,7 +27,7 @@
         }
       ],
       "returns": {
-        "type": "void"
+        "type": "address"
       }
     },
     {

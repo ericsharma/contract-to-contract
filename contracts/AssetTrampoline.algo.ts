@@ -12,12 +12,18 @@ class ChildContract extends Contract {
 
   creator = GlobalStateKey<Account>();
 
-  createApplication(sellAsset: Asset, buyAsset: Asset, sellQuant: uint64, buyQuant: uint64, creator: Account): void {
+  private calculateReturnAmount(buyAmt: uint64): uint64 {
+    return wideRatio([buyAmt, this.sellQuant.value], [this.buyQuant.value]);
+  }
+
+  createApplication(sellAsset: Asset, buyAsset: Asset, sellQuant: uint64, buyQuant: uint64, creator: Account): Address {
     this.sellAsset.value = sellAsset;
     this.buyAsset.value = buyAsset;
     this.sellQuant.value = sellQuant;
     this.buyQuant.value = buyQuant;
     this.creator.value = creator;
+
+    return this.app.address;
   }
 
   triggerOptIn(asset: Asset): void {
@@ -49,13 +55,13 @@ class AssetTrampoline extends Contract {
     });
   }
 
-  sendAssetToChildContract(
+  openOrder(
     payTxn: PayTxn,
     assetTransfer: AssetTransferTxn,
     buyAsset: Asset,
     sellQuant: uint64,
     buyQuant: uint64
-  ): void {
+  ): Address {
     // Verify input Transactions
     verifyPayTxn(payTxn, {
       receiver: globals.currentApplicationAddress,
@@ -70,7 +76,7 @@ class AssetTrampoline extends Contract {
     });
 
     // Create child contract
-    sendMethodCall<[Asset, Asset, uint64, uint64, Account], void>({
+    const orderAddress = sendMethodCall<[Asset, Asset, uint64, uint64, Account], Address>({
       name: 'createApplication',
       clearStateProgram: ChildContract.clearProgram(),
       approvalProgram: ChildContract.approvalProgram(),
@@ -97,5 +103,7 @@ class AssetTrampoline extends Contract {
       assetReceiver: childAppId.address,
       assetAmount: assetTransfer.assetAmount,
     });
+
+    return orderAddress;
   }
 }

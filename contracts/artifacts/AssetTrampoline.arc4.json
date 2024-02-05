@@ -19,7 +19,7 @@
       }
     },
     {
-      "name": "sendAssetToChildContract",
+      "name": "openOrder",
       "args": [
         {
           "name": "payTxn",
@@ -28,10 +28,22 @@
         {
           "name": "assetTransfer",
           "type": "axfer"
+        },
+        {
+          "name": "buyAsset",
+          "type": "asset"
+        },
+        {
+          "name": "sellQuant",
+          "type": "uint64"
+        },
+        {
+          "name": "buyQuant",
+          "type": "uint64"
         }
       ],
       "returns": {
-        "type": "void"
+        "type": "address"
       }
     },
     {
