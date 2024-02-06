@@ -47,7 +47,7 @@ abi_route_optInToAsa:
 optInToAsa:
 	proto 2 0
 
-	// contracts/AssetTrampoline.algo.ts:47
+	// contracts/AssetTrampoline.algo.ts:61
 	// verifyPayTxn(payTxn, {
 	//       receiver: globals.currentApplicationAddress,
 	//     })
@@ -58,7 +58,7 @@ optInToAsa:
 	==
 	assert
 
-	// contracts/AssetTrampoline.algo.ts:50
+	// contracts/AssetTrampoline.algo.ts:64
 	// sendAssetTransfer({
 	//       xferAsset: asset,
 	//       assetAmount: 0,
@@ -69,22 +69,22 @@ optInToAsa:
 	int axfer
 	itxn_field TypeEnum
 
-	// contracts/AssetTrampoline.algo.ts:51
+	// contracts/AssetTrampoline.algo.ts:65
 	// xferAsset: asset
 	frame_dig -2 // asset: Asset
 	itxn_field XferAsset
 
-	// contracts/AssetTrampoline.algo.ts:52
+	// contracts/AssetTrampoline.algo.ts:66
 	// assetAmount: 0
 	int 0
 	itxn_field AssetAmount
 
-	// contracts/AssetTrampoline.algo.ts:53
+	// contracts/AssetTrampoline.algo.ts:67
 	// sender: globals.currentApplicationAddress
 	global CurrentApplicationAddress
 	itxn_field Sender
 
-	// contracts/AssetTrampoline.algo.ts:54
+	// contracts/AssetTrampoline.algo.ts:68
 	// assetReceiver: globals.currentApplicationAddress
 	global CurrentApplicationAddress
 	itxn_field AssetReceiver
@@ -97,7 +97,7 @@ optInToAsa:
 	itxn_submit
 	retsub
 
-// openOrder(pay,axfer,asset,uint64,uint64)address
+// openOrder(pay,axfer,asset,uint64,uint64)uint64
 abi_route_openOrder:
 	// The ABI return prefix
 	byte 0x151f7c75
@@ -135,14 +135,15 @@ abi_route_openOrder:
 	==
 	assert
 
-	// execute openOrder(pay,axfer,asset,uint64,uint64)address
+	// execute openOrder(pay,axfer,asset,uint64,uint64)uint64
 	callsub openOrder
+	itob
 	concat
 	log
 	int 1
 	return
 
-// openOrder(payTxn: PayTxn, assetTransfer: AssetTransferTxn, buyAsset: Asset, sellQuant: uint64, buyQuant: uint64): Address
+// openOrder(payTxn: PayTxn, assetTransfer: AssetTransferTxn, buyAsset: Asset, sellQuant: uint64, buyQuant: uint64): Application
 openOrder:
 	proto 5 1
 
@@ -150,23 +151,15 @@ openOrder:
 	byte 0x
 	dup
 
-	// contracts/AssetTrampoline.algo.ts:66
+	// contracts/AssetTrampoline.algo.ts:80
 	// verifyPayTxn(payTxn, {
 	//       receiver: globals.currentApplicationAddress,
-	//       sender: globals.creatorAddress,
 	//       amount: 1_000_001,
 	//     })
 	// verify receiver
 	frame_dig -1 // payTxn: PayTxn
 	gtxns Receiver
 	global CurrentApplicationAddress
-	==
-	assert
-
-	// verify sender
-	frame_dig -1 // payTxn: PayTxn
-	gtxns Sender
-	global CreatorAddress
 	==
 	assert
 
@@ -177,7 +170,7 @@ openOrder:
 	==
 	assert
 
-	// contracts/AssetTrampoline.algo.ts:72
+	// contracts/AssetTrampoline.algo.ts:85
 	// assert(globals.currentApplicationAddress.isOptedInToAsset(assetTransfer.xferAsset))
 	global CurrentApplicationAddress
 	frame_dig -2 // assetTransfer: AssetTransferTxn
@@ -187,18 +180,10 @@ openOrder:
 	pop
 	assert
 
-	// contracts/AssetTrampoline.algo.ts:73
+	// contracts/AssetTrampoline.algo.ts:86
 	// verifyAssetTransferTxn(assetTransfer, {
-	//       sender: globals.creatorAddress,
 	//       assetReceiver: globals.currentApplicationAddress,
 	//     })
-	// verify sender
-	frame_dig -2 // assetTransfer: AssetTransferTxn
-	gtxns Sender
-	global CreatorAddress
-	==
-	assert
-
 	// verify assetReceiver
 	frame_dig -2 // assetTransfer: AssetTransferTxn
 	gtxns AssetReceiver
@@ -206,7 +191,7 @@ openOrder:
 	==
 	assert
 
-	// contracts/AssetTrampoline.algo.ts:79
+	// contracts/AssetTrampoline.algo.ts:91
 	// orderAddress = sendMethodCall<[Asset, Asset, uint64, uint64, Account], Address>({
 	//       name: 'createApplication',
 	//       clearStateProgram: ChildContract.clearProgram(),
@@ -223,17 +208,17 @@ openOrder:
 	method "createApplication(asset,asset,uint64,uint64,account)address"
 	itxn_field ApplicationArgs
 
-	// contracts/AssetTrampoline.algo.ts:81
+	// contracts/AssetTrampoline.algo.ts:93
 	// clearStateProgram: ChildContract.clearProgram()
 	byte b64 Cg==
 	itxn_field ClearStateProgram
 
-	// contracts/AssetTrampoline.algo.ts:82
+	// contracts/AssetTrampoline.algo.ts:94
 	// approvalProgram: ChildContract.approvalProgram()
-	byte b64 CiACAAEmAwlzZWxsUXVhbnQIYnV5UXVhbnQHY3JlYXRvcjEYFIEGCzEZCI0MAK8AAAAAAAAAAAAAAKEAAAAAAAAAAAAAAIoBAYv/KGQdIilkH0hITBREiYAEFR98dTYaBRfAHDYaBBc2GgMXNhoCF8AwNhoBF8AwiAAEULAjQ4oFAYAJc2VsbEFzc2V0i/9ngAhidXlBc3NldIv+ZyiL/Wcpi/xnKov7ZzIKiTYaARfAMIgAAiNDigEAsYEEshCL/7IRIrISMgqyADIKshQisgGziTYaARfAHIgAAiNDigEAKov/Z4mABIGjRgY2GgCOAf9lAIAEqAUADoAEjqOQszYaAI4C/6P/ygA=
+	byte b64 CiADAAEEJgUHY3JlYXRvcglzZWxsQXNzZXQIYnV5QXNzZXQJc2VsbFF1YW50CGJ1eVF1YW50MRgUgQYLMRkIjQwBIwAAAAAAAAAAAAABFQAAAAAAAAAAAAAAigEBi/8rZB0iJwRkH0hITBREiYAEFR98dTYaBRfAHDYaBBc2GgMXNhoCF8AwNhoBF8AwiAAEULAjQ4oFASmL/2cqi/5nK4v9ZycEi/xnKIv7ZzIKiTYaARfAMIgAAiNDigEAsSSyEIv/shEishIyCrIAMgqyFCKyAbOJNhoDF8AcNhoCF8AwNhoBF8AwMRYjCUk4ECQSRIgAAiNDigQAgACL/zgRKmQSRIv/OBGL/RJEKWSL/hJEKGSL/BJEi/84AIv+cABMSESL/zgSiP8xjAAyCilkcABIiwAPRChkKmRwAExIRLEkshCL/zgRshGL/zgSshIoZLIUIrIBs7EkshCL/rIRiwCyEov/OACyFCKyAbOJgASBo0YGNhoAjgH+8gCABKgFAA6ABIyr0sM2GgCOAv8e/0QA
 	itxn_field ApprovalProgram
 
-	// contracts/AssetTrampoline.algo.ts:83
+	// contracts/AssetTrampoline.algo.ts:95
 	// methodArgs: [assetTransfer.xferAsset, buyAsset, sellQuant, buyQuant, assetTransfer.sender]
 	frame_dig -2 // assetTransfer: AssetTransferTxn
 	gtxns XferAsset
@@ -256,22 +241,22 @@ openOrder:
 	byte 0x0000000000000001
 	itxn_field ApplicationArgs
 
-	// contracts/AssetTrampoline.algo.ts:84
+	// contracts/AssetTrampoline.algo.ts:96
 	// globalNumByteSlice: ChildContract.schema.global.numByteSlice
 	int 1
 	itxn_field GlobalNumByteSlice
 
-	// contracts/AssetTrampoline.algo.ts:85
+	// contracts/AssetTrampoline.algo.ts:97
 	// globalNumUint: ChildContract.schema.global.numUint
 	int 4
 	itxn_field GlobalNumUint
 
-	// contracts/AssetTrampoline.algo.ts:86
+	// contracts/AssetTrampoline.algo.ts:98
 	// localNumByteSlice: ChildContract.schema.local.numByteSlice
 	int 0
 	itxn_field LocalNumByteSlice
 
-	// contracts/AssetTrampoline.algo.ts:87
+	// contracts/AssetTrampoline.algo.ts:99
 	// localNumUint: ChildContract.schema.local.numUint
 	int 0
 	itxn_field LocalNumUint
@@ -289,12 +274,12 @@ openOrder:
 	extract 4 0
 	frame_bury 0 // orderAddress: address
 
-	// contracts/AssetTrampoline.algo.ts:90
+	// contracts/AssetTrampoline.algo.ts:102
 	// childAppId = this.itxn.createdApplicationID
 	itxn CreatedApplicationID
 	frame_bury 1 // childAppId: application
 
-	// contracts/AssetTrampoline.algo.ts:91
+	// contracts/AssetTrampoline.algo.ts:103
 	// sendPayment({
 	//       receiver: childAppId.address,
 	//       amount: payTxn.amount,
@@ -303,14 +288,14 @@ openOrder:
 	int pay
 	itxn_field TypeEnum
 
-	// contracts/AssetTrampoline.algo.ts:92
+	// contracts/AssetTrampoline.algo.ts:104
 	// receiver: childAppId.address
 	frame_dig 1 // childAppId: application
 	app_params_get AppAddress
 	pop
 	itxn_field Receiver
 
-	// contracts/AssetTrampoline.algo.ts:93
+	// contracts/AssetTrampoline.algo.ts:105
 	// amount: payTxn.amount
 	frame_dig -1 // payTxn: PayTxn
 	gtxns Amount
@@ -323,7 +308,7 @@ openOrder:
 	// Submit inner transaction
 	itxn_submit
 
-	// contracts/AssetTrampoline.algo.ts:96
+	// contracts/AssetTrampoline.algo.ts:108
 	// sendMethodCall<[Asset], void>({
 	//       name: 'triggerOptIn',
 	//       applicationID: childAppId,
@@ -335,12 +320,12 @@ openOrder:
 	method "triggerOptIn(asset)void"
 	itxn_field ApplicationArgs
 
-	// contracts/AssetTrampoline.algo.ts:98
+	// contracts/AssetTrampoline.algo.ts:110
 	// applicationID: childAppId
 	frame_dig 1 // childAppId: application
 	itxn_field ApplicationID
 
-	// contracts/AssetTrampoline.algo.ts:99
+	// contracts/AssetTrampoline.algo.ts:111
 	// methodArgs: [assetTransfer.xferAsset]
 	frame_dig -2 // assetTransfer: AssetTransferTxn
 	gtxns XferAsset
@@ -355,7 +340,7 @@ openOrder:
 	// Submit inner transaction
 	itxn_submit
 
-	// contracts/AssetTrampoline.algo.ts:101
+	// contracts/AssetTrampoline.algo.ts:113
 	// sendAssetTransfer({
 	//       xferAsset: assetTransfer.xferAsset,
 	//       assetReceiver: childAppId.address,
@@ -365,20 +350,20 @@ openOrder:
 	int axfer
 	itxn_field TypeEnum
 
-	// contracts/AssetTrampoline.algo.ts:102
+	// contracts/AssetTrampoline.algo.ts:114
 	// xferAsset: assetTransfer.xferAsset
 	frame_dig -2 // assetTransfer: AssetTransferTxn
 	gtxns XferAsset
 	itxn_field XferAsset
 
-	// contracts/AssetTrampoline.algo.ts:103
+	// contracts/AssetTrampoline.algo.ts:115
 	// assetReceiver: childAppId.address
 	frame_dig 1 // childAppId: application
 	app_params_get AppAddress
 	pop
 	itxn_field AssetReceiver
 
-	// contracts/AssetTrampoline.algo.ts:104
+	// contracts/AssetTrampoline.algo.ts:116
 	// assetAmount: assetTransfer.assetAmount
 	frame_dig -2 // assetTransfer: AssetTransferTxn
 	gtxns AssetAmount
@@ -391,9 +376,9 @@ openOrder:
 	// Submit inner transaction
 	itxn_submit
 
-	// contracts/AssetTrampoline.algo.ts:107
-	// return orderAddress;
-	frame_dig 0 // orderAddress: address
+	// contracts/AssetTrampoline.algo.ts:119
+	// return childAppId;
+	frame_dig 1 // childAppId: application
 
 	// set the subroutine return value
 	frame_bury 0
@@ -414,7 +399,7 @@ create_NoOp:
 
 call_NoOp:
 	method "optInToAsa(pay,asset)void"
-	method "openOrder(pay,axfer,asset,uint64,uint64)address"
+	method "openOrder(pay,axfer,asset,uint64,uint64)uint64"
 	txna ApplicationArgs 0
 	match abi_route_optInToAsa abi_route_openOrder
 	err

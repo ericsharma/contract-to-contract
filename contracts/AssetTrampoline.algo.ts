@@ -37,8 +37,22 @@ class ChildContract extends Contract {
     });
   }
 
-  setCreator(sender: Account): void {
-    this.creator.value = sender;
+  executeOrder(buyTransfer: AssetTransferTxn, sellAsset: Asset, buyAsset: Asset, creatorAddr: Account): void {
+    assert(buyTransfer.xferAsset === this.buyAsset.value);
+    assert(buyTransfer.xferAsset === buyAsset);
+    assert(this.sellAsset.value === sellAsset);
+    assert(this.creator.value === creatorAddr);
+    assert(buyTransfer.sender.isOptedInToAsset(sellAsset));
+    const returnAmount = this.calculateReturnAmount(buyTransfer.assetAmount);
+    assert(this.app.address.assetBalance(this.sellAsset.value) >= returnAmount);
+    assert(this.creator.value.isOptedInToAsset(this.buyAsset.value));
+    sendAssetTransfer({
+      xferAsset: buyTransfer.xferAsset,
+      assetAmount: buyTransfer.assetAmount,
+      assetReceiver: this.creator.value,
+    });
+
+    sendAssetTransfer({ xferAsset: sellAsset, assetAmount: returnAmount, assetReceiver: buyTransfer.sender });
   }
 }
 // eslint-disable-next-line no-unused-vars
@@ -61,17 +75,15 @@ class AssetTrampoline extends Contract {
     buyAsset: Asset,
     sellQuant: uint64,
     buyQuant: uint64
-  ): Address {
+  ): Application {
     // Verify input Transactions
     verifyPayTxn(payTxn, {
       receiver: globals.currentApplicationAddress,
-      sender: globals.creatorAddress,
       amount: 1_000_001,
     });
 
     assert(globals.currentApplicationAddress.isOptedInToAsset(assetTransfer.xferAsset));
     verifyAssetTransferTxn(assetTransfer, {
-      sender: globals.creatorAddress,
       assetReceiver: globals.currentApplicationAddress,
     });
 
@@ -104,6 +116,6 @@ class AssetTrampoline extends Contract {
       assetAmount: assetTransfer.assetAmount,
     });
 
-    return orderAddress;
+    return childAppId;
   }
 }
