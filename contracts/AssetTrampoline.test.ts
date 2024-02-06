@@ -22,7 +22,6 @@ describe('Asset Trampoline', () => {
   let orderAppId: bigint | number;
 
   beforeEach(fixture.beforeEach);
-
   beforeAll(async () => {
     await fixture.beforeEach();
     const { algod, testAccount, generateAccount } = fixture.context;
@@ -114,11 +113,28 @@ describe('Asset Trampoline', () => {
     console.info('###');
   });
 
+  test('executeOrder (parentMethod)', async () => {
+    const { returns: parentReturns } = await orderbookAppClient
+      .compose()
+      .executeOrder([Number(orderAppId), sellIdx, buyIdx], {
+        sender: charlie,
+        sendParams: { fee: algokit.microAlgos(3_000) },
+      })
+      .execute();
+
+    console.info(`^%^%^%^%^ parent return ${parentReturns}`);
+  });
+
   test('executeOrder', async () => {
     const { algod } = fixture.context;
-    const { appAddress } = await orderbookAppClient.appClient.getAppReference();
+    const { appAddress: orderbookAppAddress } = await orderbookAppClient.appClient.getAppReference();
 
     const orderAppClient = new ChildContractClient({ resolveBy: 'id', id: orderAppId }, algod);
+
+    const appCallTxn = orderbookAppClient.executeOrder([Number(orderAppId), sellIdx, buyIdx], {
+      sender: charlie,
+      sendParams: { fee: algokit.microAlgos(3_000) },
+    });
 
     const { appAddress: orderAppAddress } = await orderAppClient.appClient.getAppReference();
 
@@ -129,16 +145,20 @@ describe('Asset Trampoline', () => {
       amount: 6,
       suggestedParams: await algod.getTransactionParams().do(),
     });
-    await orderAppClient
+    const { returns } = await orderAppClient
       .compose()
       .triggerOptIn([Number(buyIdx)], { sender: charlie, sendParams: { fee: algokit.microAlgos(3_000) } })
-      .executeOrder([assetTransferBuyTxn, sellIdx, buyIdx, bob.addr], {
+      .executeOrder([appCallTxn, assetTransferBuyTxn, sellIdx, buyIdx, bob.addr], {
         sender: charlie,
         sendParams: { fee: algokit.microAlgos(6_000) },
       })
       .execute();
 
+    console.info(`#### ${returns}`);
+
     console.info(`
+      orderbook: ${orderbookAppAddress}
+      order: ${orderAppAddress}
       bob (seller): ${bob.addr}
       charlie (buyer): ${charlie.addr}
       buy IDX : ${buyIdx}

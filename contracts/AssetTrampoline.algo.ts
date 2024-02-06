@@ -1,4 +1,5 @@
 import { Contract } from '@algorandfoundation/tealscript';
+import GetApplicationByID from 'algosdk/dist/types/client/v2/algod/getApplicationByID';
 
 // eslint-disable-next-line no-unused-vars
 class ChildContract extends Contract {
@@ -37,7 +38,16 @@ class ChildContract extends Contract {
     });
   }
 
-  executeOrder(buyTransfer: AssetTransferTxn, sellAsset: Asset, buyAsset: Asset, creatorAddr: Account): void {
+  executeOrder(
+    parentAppCall: AppCallTxn,
+    buyTransfer: AssetTransferTxn,
+    sellAsset: Asset,
+    buyAsset: Asset,
+    creatorAddr: Account
+  ): Address[] {
+    // Update method args to take an AppCall as first transaction.
+    // Check that the appCall is going the same as the globals.creatorAddress
+    assert(parentAppCall.applicationID.address === this.app.creator);
     assert(buyTransfer.xferAsset === this.buyAsset.value);
     assert(buyTransfer.xferAsset === buyAsset);
     assert(this.sellAsset.value === sellAsset);
@@ -53,6 +63,8 @@ class ChildContract extends Contract {
     });
 
     sendAssetTransfer({ xferAsset: sellAsset, assetAmount: returnAmount, assetReceiver: buyTransfer.sender });
+
+    return [parentAppCall.applicationID.address, this.app.creator, this.app.address];
   }
 }
 // eslint-disable-next-line no-unused-vars
@@ -117,5 +129,12 @@ class AssetTrampoline extends Contract {
     });
 
     return childAppId;
+  }
+
+  executeOrder(orderApp: Application, sellAsset: Asset, buyAsset: Asset): Address[] {
+    assert(orderApp.creator === this.app.address);
+    assert(orderApp.address.assetBalance(sellAsset) > 0);
+    // assert(this.app.address.assetBalance(buyAsset) >= 0);
+    return [orderApp.address, orderApp.creator, this.app.address];
   }
 }
