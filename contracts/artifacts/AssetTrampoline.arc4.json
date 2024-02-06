@@ -47,6 +47,26 @@
       }
     },
     {
+      "name": "executeOrder",
+      "args": [
+        {
+          "name": "orderApp",
+          "type": "application"
+        },
+        {
+          "name": "sellAsset",
+          "type": "asset"
+        },
+        {
+          "name": "buyAsset",
+          "type": "asset"
+        }
+      ],
+      "returns": {
+        "type": "address[]"
+      }
+    },
+    {
       "name": "createApplication",
       "args": [],
       "returns": {

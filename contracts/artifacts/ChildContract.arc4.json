@@ -46,6 +46,10 @@
       "name": "executeOrder",
       "args": [
         {
+          "name": "parentAppCall",
+          "type": "appl"
+        },
+        {
           "name": "buyTransfer",
           "type": "axfer"
         },
@@ -63,7 +67,7 @@
         }
       ],
       "returns": {
-        "type": "void"
+        "type": "address[]"
       }
     }
   ]
