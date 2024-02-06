@@ -172,27 +172,180 @@ triggerOptIn:
 	itxn_submit
 	retsub
 
-// setCreator(account)void
-abi_route_setCreator:
-	// sender: account
-	txna ApplicationArgs 1
+// executeOrder(axfer,asset,asset,account)void
+abi_route_executeOrder:
+	// creatorAddr: account
+	txna ApplicationArgs 3
 	btoi
 	txnas Accounts
 
-	// execute setCreator(account)void
-	callsub setCreator
+	// buyAsset: asset
+	txna ApplicationArgs 2
+	btoi
+	txnas Assets
+
+	// sellAsset: asset
+	txna ApplicationArgs 1
+	btoi
+	txnas Assets
+
+	// buyTransfer: axfer
+	txn GroupIndex
+	int 1
+	-
+	dup
+	gtxns TypeEnum
+	int axfer
+	==
+	assert
+
+	// execute executeOrder(axfer,asset,asset,account)void
+	callsub executeOrder
 	int 1
 	return
 
-// setCreator(sender: Account): void
-setCreator:
-	proto 1 0
+// executeOrder(buyTransfer: AssetTransferTxn, sellAsset: Asset, buyAsset: Asset, creatorAddr: Account): void
+executeOrder:
+	proto 4 0
+
+	// Push empty bytes after the frame pointer to reserve space for local variables
+	byte 0x
 
 	// contracts/AssetTrampoline.algo.ts:41
-	// this.creator.value = sender
+	// assert(buyTransfer.xferAsset === this.buyAsset.value)
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns XferAsset
+	byte 0x6275794173736574 // "buyAsset"
+	app_global_get
+	==
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:42
+	// assert(buyTransfer.xferAsset === buyAsset)
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns XferAsset
+	frame_dig -3 // buyAsset: Asset
+	==
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:43
+	// assert(this.sellAsset.value === sellAsset)
+	byte 0x73656c6c4173736574 // "sellAsset"
+	app_global_get
+	frame_dig -2 // sellAsset: Asset
+	==
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:44
+	// assert(this.creator.value === creatorAddr)
 	byte 0x63726561746f72 // "creator"
-	frame_dig -1 // sender: Account
-	app_global_put
+	app_global_get
+	frame_dig -4 // creatorAddr: Account
+	==
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:45
+	// assert(buyTransfer.sender.isOptedInToAsset(sellAsset))
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns Sender
+	frame_dig -2 // sellAsset: Asset
+	asset_holding_get AssetBalance
+	swap
+	pop
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:46
+	// returnAmount = this.calculateReturnAmount(buyTransfer.assetAmount)
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns AssetAmount
+	callsub calculateReturnAmount
+	frame_bury 0 // returnAmount: uint64
+
+	// contracts/AssetTrampoline.algo.ts:47
+	// assert(this.app.address.assetBalance(this.sellAsset.value) >= returnAmount)
+	global CurrentApplicationAddress
+	byte 0x73656c6c4173736574 // "sellAsset"
+	app_global_get
+	asset_holding_get AssetBalance
+	pop
+	frame_dig 0 // returnAmount: uint64
+	>=
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:48
+	// assert(this.creator.value.isOptedInToAsset(this.buyAsset.value))
+	byte 0x63726561746f72 // "creator"
+	app_global_get
+	byte 0x6275794173736574 // "buyAsset"
+	app_global_get
+	asset_holding_get AssetBalance
+	swap
+	pop
+	assert
+
+	// contracts/AssetTrampoline.algo.ts:49
+	// sendAssetTransfer({
+	//       xferAsset: buyTransfer.xferAsset,
+	//       assetAmount: buyTransfer.assetAmount,
+	//       assetReceiver: this.creator.value,
+	//     })
+	itxn_begin
+	int axfer
+	itxn_field TypeEnum
+
+	// contracts/AssetTrampoline.algo.ts:50
+	// xferAsset: buyTransfer.xferAsset
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns XferAsset
+	itxn_field XferAsset
+
+	// contracts/AssetTrampoline.algo.ts:51
+	// assetAmount: buyTransfer.assetAmount
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns AssetAmount
+	itxn_field AssetAmount
+
+	// contracts/AssetTrampoline.algo.ts:52
+	// assetReceiver: this.creator.value
+	byte 0x63726561746f72 // "creator"
+	app_global_get
+	itxn_field AssetReceiver
+
+	// Fee field not set, defaulting to 0
+	int 0
+	itxn_field Fee
+
+	// Submit inner transaction
+	itxn_submit
+
+	// contracts/AssetTrampoline.algo.ts:55
+	// sendAssetTransfer({ xferAsset: sellAsset, assetAmount: returnAmount, assetReceiver: buyTransfer.sender })
+	itxn_begin
+	int axfer
+	itxn_field TypeEnum
+
+	// contracts/AssetTrampoline.algo.ts:55
+	// xferAsset: sellAsset
+	frame_dig -2 // sellAsset: Asset
+	itxn_field XferAsset
+
+	// contracts/AssetTrampoline.algo.ts:55
+	// assetAmount: returnAmount
+	frame_dig 0 // returnAmount: uint64
+	itxn_field AssetAmount
+
+	// contracts/AssetTrampoline.algo.ts:55
+	// assetReceiver: buyTransfer.sender
+	frame_dig -1 // buyTransfer: AssetTransferTxn
+	gtxns Sender
+	itxn_field AssetReceiver
+
+	// Fee field not set, defaulting to 0
+	int 0
+	itxn_field Fee
+
+	// Submit inner transaction
+	itxn_submit
 	retsub
 
 create_NoOp:
@@ -203,7 +356,7 @@ create_NoOp:
 
 call_NoOp:
 	method "triggerOptIn(asset)void"
-	method "setCreator(account)void"
+	method "executeOrder(axfer,asset,asset,account)void"
 	txna ApplicationArgs 0
-	match abi_route_triggerOptIn abi_route_setCreator
+	match abi_route_triggerOptIn abi_route_executeOrder
 	err

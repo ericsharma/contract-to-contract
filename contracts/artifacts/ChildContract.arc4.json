@@ -43,10 +43,22 @@
       }
     },
     {
-      "name": "setCreator",
+      "name": "executeOrder",
       "args": [
         {
-          "name": "sender",
+          "name": "buyTransfer",
+          "type": "axfer"
+        },
+        {
+          "name": "sellAsset",
+          "type": "asset"
+        },
+        {
+          "name": "buyAsset",
+          "type": "asset"
+        },
+        {
+          "name": "creatorAddr",
           "type": "account"
         }
       ],
