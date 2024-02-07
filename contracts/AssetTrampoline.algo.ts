@@ -17,7 +17,7 @@ class ChildContract extends Contract {
   //   // return this.app.address;
   // }
 
-  triggerOptIn(payTxn: InnerPayment, asset: Asset): void {
+  triggerOptIn(payTxn: PayTxn, asset: Asset): void {
     // this.Asset.value = asset;
     // verifyPayTxn(payTxn, {
     //   receiver: this.app.address,
@@ -64,7 +64,7 @@ class AssetTrampoline extends Contract {
       sender: globals.creatorAddress,
     });
 
-    assert(globals.currentApplicationAddress.hasAsset(assetTransfer.xferAsset));
+    assert(globals.currentApplicationAddress.isOptedInToAsset(assetTransfer.xferAsset));
     verifyAssetTransferTxn(assetTransfer, {
       sender: globals.creatorAddress,
       assetReceiver: globals.currentApplicationAddress,
